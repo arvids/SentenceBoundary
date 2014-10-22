@@ -38,13 +38,13 @@ class SimpleSentence2Pipe extends Pipe {
       if (line.length() == 0) {
         continue;
       }
-      final ArrayList<Word> words = getSubSentences(line);
+      final ArrayList<Word> words = getWords(line);
       if (words.size() == 0) {
         continue;
       }
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        final String currentSentence = words.get(j).getSentence();
+        final String currentSentence = words.get(j).getWord();
         final String plainCurrentSentence = getPlainWord(currentSentence);
         final Token token = new Token(currentSentence);
         
@@ -125,21 +125,21 @@ class SimpleSentence2Pipe extends Pipe {
     final HashMap<String, Integer> freq = new HashMap<String, Integer>();
     for (int i = 0; i < lines.size(); i++) {
       final String line = lines.get(i);
-      final ArrayList<Word> words = getSubSentences(line);
+      final ArrayList<Word> words = getWords(line);
       for (int j = 0; j < words.size(); j++) {
         final Word word = words.get(j);
         int count = 0;
-        if (freq.containsKey(word.getSentence())) {
-          count = freq.get(word.getSentence());
+        if (freq.containsKey(word.getWord())) {
+          count = freq.get(word.getWord());
         }
         count++;
-        freq.put(word.getSentence(), count);
+        freq.put(word.getWord(), count);
       }
     }
     return freq;
   }
 
-  private ArrayList<Word> getSubSentences(String line) {
+  private ArrayList<Word> getWords(String line) {
     final Matcher matcher = splitPattern.matcher(line);
     final ArrayList<Word> words = new ArrayList<Word>();
     while (matcher.find()) {

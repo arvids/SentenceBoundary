@@ -23,25 +23,22 @@ public class SentenceBoundary {
   private static int          numberOfWords;
   private static final int    numberOfChunks = 20;
   private static int          chunkSize;
-  
+  private static File file;
   public static final String EOS = "EOS";
   public static final String IS = "IS";
   private CRF crf;
   
+  
+  
   public static final int[][] uniGram        = new int[][] { {-1}, {0}, {1}};
   public static final int[][] biGram         = new int[][] { {-1, 0}, {0, 1}};
   public static final int[][] triGram        = new int[][] {{-1, 0, 1}};
-
-  public static InstanceList createTrainingData(File file, boolean useTokenOffset) {
+  
+  public SentenceBoundary(File file) {
     
-    final LabelAlphabet labelAlphabet = new LabelAlphabet();
-    labelAlphabet.lookupLabel(SentenceBoundary.EOS, true); 
-    labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
-    
-    final Pipe pipe =
-        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
-            new TokenSequence2FeatureVectorSequence(true, true)});
-    final InstanceList instanceList = new InstanceList(pipe);
+    ArrayList<String> testText = new ArrayList();
+    testText.add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
+    this.file = file;
     
     numberOfWords = 0;
     long start = System.currentTimeMillis();
@@ -56,13 +53,37 @@ public class SentenceBoundary {
     final ArrayList<ArrayList<String>> sentencesChunks = chunks(sentences, chunkSize);
     System.out.println("Split " + numberOfSentences + " in to " + sentencesChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
+    
+    InstanceList instanceList = createTrainingData(sentencesChunks);
+    
+    train(instanceList);
+    
+    System.out.println(predict(testText));
+    
+    
+    
+    
+  }
+
+  public static InstanceList createTrainingData(ArrayList<ArrayList<String>> sentencesChunks) {
+    
+    final LabelAlphabet labelAlphabet = new LabelAlphabet();
+    labelAlphabet.lookupLabel(SentenceBoundary.EOS, true); 
+    labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
+    
+    final Pipe pipe =
+        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
+            new TokenSequence2FeatureVectorSequence(true, true)});
+    final InstanceList instanceList = new InstanceList(pipe);
+    
+    
 
     double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;
     double total = chunkPercentage;
     double i = 0.0;
     final long totalStart = System.currentTimeMillis();
     for (final ArrayList<String> chunk : sentencesChunks) {
-      start = System.currentTimeMillis();
+      long start = System.currentTimeMillis();
       instanceList.addThruPipe(new Instance(chunk, "", "", file.getName() + i));
       i += 1;
       total = i * chunkPercentage;
@@ -111,8 +132,12 @@ public class SentenceBoundary {
   }
   
   public String predict(ArrayList<String> sentences) {
+    long start = System.currentTimeMillis();
     Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
+    System.out.println("Predict complete");
+    System.out.println("Time: " + (System.currentTimeMillis() - start));
     return predict(instance);
+
   }
   
   public String predict(Instance instance) {
@@ -128,14 +153,16 @@ public class SentenceBoundary {
     
   }
 
-  public void train(InstanceList instanceList, Pipe dataPipe) {
+  public void train(InstanceList instanceList) {
+    long start = System.currentTimeMillis();
     final CRF crf = new CRF(instanceList.getPipe(), (Pipe) null);
     crf.addStatesForLabelsConnectedAsIn(instanceList);
     // get trainer
     final CRFTrainerByLabelLikelihood crfTrainer = new CRFTrainerByLabelLikelihood(crf);
     crfTrainer.trainIncremental(instanceList);
     crf.getInputPipe().getDataAlphabet().stopGrowth();
-    System.out.println("trainingcomplete");
+    System.out.println("Trainingcomplete");
+    System.out.println("Time: " + (System.currentTimeMillis() - start));
   }
 
   public static ArrayList<ArrayList<String>> chunks(ArrayList<String> sentences, int size) {
