@@ -1,23 +1,16 @@
 public class Word {
 
-  private final int    start; // start offset
-  private final int    end;  // end offset
-  private final String word; // string representation of this unit
-  private String       label; // the predicted label
+  private final String word;
+  private String       label;
 
-  public Word(int start, int end, String word) {
-    this.start = start;
-    this.end = end;
+  public Word(String word) {
     this.word = word;
     label = "O";
   }
-
-  public int getStart() {
-    return start;
-  }
-
-  public int getEnd() {
-    return end;
+  
+  public Word(String word, String label) {
+    this.word = word;
+    this.label = label;
   }
 
   public String getLabel() {

@@ -46,10 +46,10 @@ public class Test {
       System.out.println("Start: " + start);
       final int end = matcher.end();
       System.out.println("End: " + end);
-      final String rep = matcher.group();
-      System.out.println("Rep: " + rep);
+      final String word = matcher.group();
+      System.out.println("Rep: " + word);
       System.out.println("testarN: " + line.substring(start, end));
-      words.add(new Word(start, end, rep));
+      words.add(new Word(word));
     }
     return words;
   }

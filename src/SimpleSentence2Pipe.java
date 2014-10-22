@@ -99,10 +99,8 @@ class SimpleSentence2Pipe extends Pipe {
     final Matcher matcher = splitPattern.matcher(line);
     final ArrayList<Word> words = new ArrayList<Word>();
     while (matcher.find()) {
-      final int start = matcher.start();
-      final int end = matcher.end();
-      final String rep = matcher.group();
-      words.add(new Word(start, end, rep));
+      final String word = matcher.group();
+      words.add(new Word(word));
     }
     return words;
   }
