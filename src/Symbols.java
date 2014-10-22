@@ -6,10 +6,6 @@ class Symbols {
   private TreeSet<String> eosSymbols;
 
   public Symbols() {
-    init();
-  }
-
-  private void init() {
     symbols = new TreeSet<String>();
     eosSymbols = new TreeSet<String>();
     eosSymbols.add(".");

@@ -27,29 +27,31 @@ class SimpleSentence2Pipe extends Pipe {
   public Instance pipe(Instance instance) {
     final String abstractFileName = (String) instance.getSource();
     final ArrayList<String> lines = (ArrayList<String>) instance.getData();
-    final HashMap<String, Integer> subSentenceFrequency = getSubSentenceFrequency(lines);
+    final HashMap<String, Integer> wordFrequency = getWordFrequency(lines);
     final TokenSequence tokenSequence = new TokenSequence();
     final LabelSequence labelSequence = new LabelSequence(getTargetAlphabet());
-    final ArrayList<SubSentence> subSentenceInfo = new ArrayList<SubSentence>();
+    
+    //Should probably make a sentence class
+    final ArrayList<Word> subSentenceInfo = new ArrayList<Word>();
 
     for (final String line : lines) {
       if (line.length() == 0) {
         continue;
       }
-      final ArrayList<SubSentence> subSentences = getSubSentences(line);
-      if (subSentences.size() == 0) {
+      final ArrayList<Word> words = getSubSentences(line);
+      if (words.size() == 0) {
         continue;
       }
-      for (int j = 0; j < subSentences.size(); j++) {
+      for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        final String currentSentence = subSentences.get(j).getSentence();
-        final String plainCurrentSentence = getPlainSubSentence(currentSentence);
+        final String currentSentence = words.get(j).getSentence();
+        final String plainCurrentSentence = getPlainWord(currentSentence);
         final Token token = new Token(currentSentence);
         
         if (containsEOSSymbol(currentSentence)) {
           token.setFeatureValue("endwithEOSSymb=" + getEOSSymbol(currentSentence), 1);
         }
-        if ((j + 1) == subSentences.size()) {
+        if ((j + 1) == words.size()) {
           label = SentenceBoundary.EOS;
         }
         final int count = nrEOSSymbolsContained(plainCurrentSentence);
@@ -61,7 +63,7 @@ class SimpleSentence2Pipe extends Pipe {
         // check whether token with EOSsymbol occurs more than once in
         // abstract
         if (containsEOSSymbol(currentSentence)) {
-          final int freq = subSentenceFrequency.get(currentSentence).intValue();
+          final int freq = wordFrequency.get(currentSentence).intValue();
           if (freq > 1) {
             token.setFeatureValue("FreqTokenEOSSymbol", 1);
           }
@@ -69,7 +71,7 @@ class SimpleSentence2Pipe extends Pipe {
         tokenSequence.add(token);
         labelSequence.add(label);
       }
-      subSentenceInfo.addAll(subSentences);
+      subSentenceInfo.addAll(words);
     }
     
     instance.setData(tokenSequence);
@@ -111,41 +113,41 @@ class SimpleSentence2Pipe extends Pipe {
     return "";
   }
 
-  private String getPlainSubSentence(String subSentence) {
-    if (containsEOSSymbol(subSentence)) {
-      return subSentence.substring(0, subSentence.length() - 1);
+  private String getPlainWord(String word) {
+    if (containsEOSSymbol(word)) {
+      return word.substring(0, word.length() - 1);
     } else {
-      return subSentence;
+      return word;
     }
   }
 
-  private HashMap<String, Integer> getSubSentenceFrequency(ArrayList<String> lines) {
+  private HashMap<String, Integer> getWordFrequency(ArrayList<String> lines) {
     final HashMap<String, Integer> freq = new HashMap<String, Integer>();
     for (int i = 0; i < lines.size(); i++) {
       final String line = lines.get(i);
-      final ArrayList<SubSentence> subSentences = getSubSentences(line);
-      for (int j = 0; j < subSentences.size(); j++) {
-        final SubSentence subSentence = subSentences.get(j);
+      final ArrayList<Word> words = getSubSentences(line);
+      for (int j = 0; j < words.size(); j++) {
+        final Word word = words.get(j);
         int count = 0;
-        if (freq.containsKey(subSentence.getSentence())) {
-          count = freq.get(subSentence.getSentence());
+        if (freq.containsKey(word.getSentence())) {
+          count = freq.get(word.getSentence());
         }
         count++;
-        freq.put(subSentence.getSentence(), count);
+        freq.put(word.getSentence(), count);
       }
     }
     return freq;
   }
 
-  private ArrayList<SubSentence> getSubSentences(String line) {
+  private ArrayList<Word> getSubSentences(String line) {
     final Matcher matcher = splitPattern.matcher(line);
-    final ArrayList<SubSentence> subSentences = new ArrayList<SubSentence>();
+    final ArrayList<Word> words = new ArrayList<Word>();
     while (matcher.find()) {
       final int start = matcher.start();
       final int end = matcher.end();
       final String rep = matcher.group();
-      subSentences.add(new SubSentence(start, end, rep));
+      words.add(new Word(start, end, rep));
     }
-    return subSentences;
+    return words;
   }
 }

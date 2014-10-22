@@ -15,6 +15,7 @@ import cc.mallet.pipe.tsf.OffsetConjunctions;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
+import cc.mallet.types.Sequence;
 
 public class SentenceBoundary {
 
@@ -25,6 +26,7 @@ public class SentenceBoundary {
   
   public static final String EOS = "EOS";
   public static final String IS = "IS";
+  private CRF crf;
   
   public static final int[][] uniGram        = new int[][] { {-1}, {0}, {1}};
   public static final int[][] biGram         = new int[][] { {-1, 0}, {0, 1}};
@@ -64,12 +66,13 @@ public class SentenceBoundary {
       instanceList.addThruPipe(new Instance(chunk, "", "", file.getName() + i));
       i += 1;
       total = i * chunkPercentage;
-      if (i * chunkPercentage > 100) {
-        chunkPercentage = 100.0 - i * chunkPercentage;
+      if (total > 100) {
+        chunkPercentage = 100.0 - (i-1) * chunkPercentage;
+        total = 100.0;
       }
       System.out.println("Completed: " + chunkPercentage + "% in "
           + (System.currentTimeMillis() - start) + " ms");
-      System.out.println((i * chunkPercentage) + "% of Total completed in "
+      System.out.println((total) + "% of Total completed in "
           + ((System.currentTimeMillis() - totalStart) / 1000) + " s");
     }
     return instanceList;
@@ -106,16 +109,31 @@ public class SentenceBoundary {
     }
     return sentences;
   }
+  
+  public String predict(ArrayList<String> sentences) {
+    Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
+    return predict(instance);
+  }
+  
+  public String predict(Instance instance) {
+    Sequence input = (Sequence) instance.getData();
+    ArrayList<Word> words = (ArrayList<Word>) instance.getName();
+    ArrayList<String> labels = new ArrayList<String>();
+    
+    Sequence<String> labelresults = crf.transduce(input);
+    for (int i = 0; i < labelresults.size(); i++) {
+      words.get(i).setLabel(labelresults.get(i));
+    }
+    return new Text(words).getText();
+    
+  }
 
   public void train(InstanceList instanceList, Pipe dataPipe) {
     final CRF crf = new CRF(instanceList.getPipe(), (Pipe) null);
     crf.addStatesForLabelsConnectedAsIn(instanceList);
     // get trainer
     final CRFTrainerByLabelLikelihood crfTrainer = new CRFTrainerByLabelLikelihood(crf);
-    crfTrainer.train(instanceList, 10);
-    // do the training with unlimited amount of iterations
-    // boolean b = crfTrainer.trainOptimized(instList);
-    // stop growth and set trained
+    crfTrainer.trainIncremental(instanceList);
     crf.getInputPipe().getDataAlphabet().stopGrowth();
     System.out.println("trainingcomplete");
   }
