@@ -16,11 +16,12 @@ class SimpleSentence2Pipe extends Pipe {
 
   private static final long    serialVersionUID = 1L;
   private static final Pattern splitPattern     = Pattern.compile("[^\\s]+");
-  TreeSet<String>              eosSymbols;
+  private Symbols symbols;
 
   SimpleSentence2Pipe() {
     super(new Alphabet(), new LabelAlphabet());
-    eosSymbols = new Symbols().getEOSSymbols();
+    symbols = new Symbols();
+    
   }
 
   @Override
@@ -30,10 +31,9 @@ class SimpleSentence2Pipe extends Pipe {
     final HashMap<String, Integer> wordFrequency = getWordFrequency(lines);
     final TokenSequence tokenSequence = new TokenSequence();
     final LabelSequence labelSequence = new LabelSequence(getTargetAlphabet());
-    
-    //Should probably make a sentence class
+    // Should probably make a sentence class
     final ArrayList<Word> subSentenceInfo = new ArrayList<Word>();
-
+    
     for (final String line : lines) {
       if (line.length() == 0) {
         continue;
@@ -42,38 +42,29 @@ class SimpleSentence2Pipe extends Pipe {
       if (words.size() == 0) {
         continue;
       }
+      
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        final String currentSentence = words.get(j).getWord();
-        final String plainCurrentSentence = getPlainWord(currentSentence);
-        final Token token = new Token(currentSentence);
         
-        if (containsEOSSymbol(currentSentence)) {
-          token.setFeatureValue("endwithEOSSymb=" + getEOSSymbol(currentSentence), 1);
+        final String currentWord = words.get(j).toString();
+        final String plainCurrentWord = getPlainWord(currentWord);
+        final Token token = new Token(currentWord);
+        
+        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
+          token.setFeatureValue("endwithEOSSymb=" + getSymbol(currentWord), 1);
         }
+        
+        //last word in the sentence
         if ((j + 1) == words.size()) {
           label = SentenceBoundary.EOS;
         }
-        final int count = nrEOSSymbolsContained(plainCurrentSentence);
-        if (count > 0) {
-          token.setFeatureValue("hasinnerEOSSymb=" + count, 1);
-        }
-        // the token itself
-        token.setFeatureValue("TOKEN=" + currentSentence, 1);
-        // check whether token with EOSsymbol occurs more than once in
-        // abstract
-        if (containsEOSSymbol(currentSentence)) {
-          final int freq = wordFrequency.get(currentSentence).intValue();
-          if (freq > 1) {
-            token.setFeatureValue("FreqTokenEOSSymbol", 1);
-          }
-        }
+        
+        token.setFeatureValue("TOKEN=" + currentWord, 1);
         tokenSequence.add(token);
         labelSequence.add(label);
       }
       subSentenceInfo.addAll(words);
     }
-    
     instance.setData(tokenSequence);
     instance.setTarget(labelSequence);
     instance.setName(subSentenceInfo);
@@ -81,44 +72,18 @@ class SimpleSentence2Pipe extends Pipe {
     return instance;
   }
 
-  private int nrEOSSymbolsContained(String token) {
-    int count = 0;
-    final char[] c = token.toCharArray();
-    for (final char element : c) {
-      final char[] cc = {element};
-      if (eosSymbols.contains(new String(cc))) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  private boolean containsEOSSymbol(String token) {
-    if (token.length() > 0) {
-      final String lastChar = token.substring(token.length() - 1, token.length());
-      if (eosSymbols.contains(lastChar)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private String getEOSSymbol(String token) {
-    if (token.length() > 0) {
-      final String lastChar = token.substring(token.length() - 1, token.length());
-      if (eosSymbols.contains(lastChar)) {
-        return lastChar;
-      }
-    }
-    return "";
-  }
+  
 
   private String getPlainWord(String word) {
-    if (containsEOSSymbol(word)) {
-      return word.substring(0, word.length() - 1);
-    } else {
-      return word;
-    }
+    if (symbols.wordEndsWithSymbol(word)) {
+      word = word.substring(0, word.length() - 1);
+    } else if (symbols.wordStartsWithSymbol(word)) {
+      word = word.substring(1, word.length());
+      }
+      return word; 
+  }
+  private String getSymbol(String word) {
+    return word.substring(word.length()-1,word.length());
   }
 
   private HashMap<String, Integer> getWordFrequency(ArrayList<String> lines) {
@@ -129,11 +94,11 @@ class SimpleSentence2Pipe extends Pipe {
       for (int j = 0; j < words.size(); j++) {
         final Word word = words.get(j);
         int count = 0;
-        if (freq.containsKey(word.getWord())) {
-          count = freq.get(word.getWord());
+        if (freq.containsKey(word.toString())) {
+          count = freq.get(word.toString());
         }
         count++;
-        freq.put(word.getWord(), count);
+        freq.put(word.toString(), count);
       }
     }
     return freq;
