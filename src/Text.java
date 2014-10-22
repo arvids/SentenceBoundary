@@ -1,28 +1,35 @@
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-
 
 public class Text {
 
   private String text;
-  
+
   public Text(ArrayList<Word> words) {
-    StringBuilder sb = new StringBuilder();
-    for (Word word: words) {
-      if (word.getLabel().equals(SentenceBoundary.EOS)) {
-        sb.append(word.getWord() + ".");
-      } else {
-        sb.append(word.getWord() + " ");
+    boolean capitalizeNextWord = true;
+    String wordString = "";
+    final StringBuilder sb = new StringBuilder();
+    for (final Word word : words) {
+      wordString = word.toString();
+      if (capitalizeNextWord) {
+        wordString = capitalize(wordString);
       }
-      
+      if (word.getLabel().equals(SentenceBoundary.EOS)) {
+        sb.append(wordString + ".");
+        capitalizeNextWord = true;
+      } else {
+        sb.append(wordString + " ");
+        capitalizeNextWord = false;
+      }
     }
-    String text = sb.toString();
+    this.text = sb.toString().trim();
   }
-  
-  public String getText() {
+
+  @Override
+  public String toString() {
     return this.text;
   }
-  
+
+  private String capitalize(String word) {
+    return Character.toUpperCase(word.charAt(0)) + word.substring(1);
+  }
 }

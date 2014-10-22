@@ -1,15 +1,15 @@
 public class Word {
 
-  private int    start;   // start offset
-  private int    end;     // end offset
-  private String word; // string representation of this unit
-  private String label;   // the predicted label
+  private final int    start; // start offset
+  private final int    end;  // end offset
+  private final String word; // string representation of this unit
+  private String       label; // the predicted label
 
   public Word(int start, int end, String word) {
     this.start = start;
     this.end = end;
     this.word = word;
-    this.label = "O";
+    label = "O";
   }
 
   public int getStart() {
@@ -20,10 +20,6 @@ public class Word {
     return end;
   }
 
-  public String getWord() {
-    return word;
-  }
-
   public String getLabel() {
     return label;
   }
@@ -31,9 +27,9 @@ public class Word {
   public void setLabel(String label) {
     this.label = label;
   }
-  
-   @Override
+
+  @Override
   public String toString() {
-    return word + ": " + start + "-" + end;
+    return word;
   }
 }
