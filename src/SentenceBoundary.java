@@ -21,25 +21,25 @@ public class SentenceBoundary {
 
   private static int          numberOfSentences;
   private static int          numberOfWords;
-  private static final int    numberOfChunks = 20;
+  private static final int    numberOfChunks       = 20;
   private static int          chunkSize;
-  private static File file;
-  public static final String EOS = "EOS";
-  public static final String IS = "IS";
-  private CRF crf;
-  
-  
-  
-  public static final int[][] uniGram        = new int[][] { {-1}, {0}, {1}};
-  public static final int[][] biGram         = new int[][] { {-1, 0}, {0, 1}};
-  public static final int[][] triGram        = new int[][] {{-1, 0, 1}};
-  
+  private static File         file;
+  public static final String  EOS                  = "EOS";
+  public static final String  EOS_PERIOD           = "EOS_PERIOD";
+  public static final String  EOS_EXCLAMATION_MARK = "EOS_EXCLAMATION_MARK";
+  public static final String  EOS_QUESTION_MARK    = "EOS_QUESTION_MARK";
+  public static final String  IS                   = "IS";
+  public static final String  IS_COMMA             = "IS_COMMA";
+  private CRF                 crf;
+  public static final int[][] uniGram              = new int[][] { {-1}, {0}, {1}};
+  public static final int[][] biGram               = new int[][] { {-1, 0}, {0, 1}};
+  public static final int[][] triGram              = new int[][] {{-1, 0, 1}};
+
   public SentenceBoundary(File file) {
-    
-    ArrayList<String> testText = new ArrayList();
-    testText.add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
-    this.file = file;
-    
+    final ArrayList<String> testText = new ArrayList();
+    testText
+        .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
+    SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
     final ArrayList<String> sentences = readUkWac(file);
@@ -48,47 +48,34 @@ public class SentenceBoundary {
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
     chunkSize = numberOfSentences / numberOfChunks;
     System.out.println("ChunkSize: " + chunkSize);
-    
     start = System.currentTimeMillis();
     final ArrayList<ArrayList<String>> sentencesChunks = chunks(sentences, chunkSize);
     System.out.println("Split " + numberOfSentences + " in to " + sentencesChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
-    
-    InstanceList instanceList = createTrainingData(sentencesChunks);
-    
+    final InstanceList instanceList = createTrainingData(sentencesChunks);
     train(instanceList);
-    
     System.out.println(predict(testText));
-    
-    
-    
-    
   }
 
   public static InstanceList createTrainingData(ArrayList<ArrayList<String>> sentencesChunks) {
-    
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
-    labelAlphabet.lookupLabel(SentenceBoundary.EOS, true); 
+    labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
-    
     final Pipe pipe =
         new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
-    
-    
-
     double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;
     double total = chunkPercentage;
     double i = 0.0;
     final long totalStart = System.currentTimeMillis();
     for (final ArrayList<String> chunk : sentencesChunks) {
-      long start = System.currentTimeMillis();
+      final long start = System.currentTimeMillis();
       instanceList.addThruPipe(new Instance(chunk, "", "", file.getName() + i));
       i += 1;
       total = i * chunkPercentage;
       if (total > 100) {
-        chunkPercentage = 100.0 - (i-1) * chunkPercentage;
+        chunkPercentage = 100.0 - ((i - 1) * chunkPercentage);
         total = 100.0;
       }
       System.out.println("Completed: " + chunkPercentage + "% in "
@@ -130,31 +117,28 @@ public class SentenceBoundary {
     }
     return sentences;
   }
-  
+
   public String predict(ArrayList<String> sentences) {
-    long start = System.currentTimeMillis();
-    Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
+    final long start = System.currentTimeMillis();
+    final Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
     System.out.println("Predict complete");
     System.out.println("Time: " + (System.currentTimeMillis() - start));
     return predict(instance);
-
   }
-  
+
   public String predict(Instance instance) {
-    Sequence input = (Sequence) instance.getData();
-    ArrayList<Word> words = (ArrayList<Word>) instance.getName();
-    ArrayList<String> labels = new ArrayList<String>();
-    
-    Sequence<String> labelresults = crf.transduce(input);
+    final Sequence input = (Sequence) instance.getData();
+    final ArrayList<Word> words = (ArrayList<Word>) instance.getName();
+    final ArrayList<String> labels = new ArrayList<String>();
+    final Sequence<String> labelresults = crf.transduce(input);
     for (int i = 0; i < labelresults.size(); i++) {
       words.get(i).setLabel(labelresults.get(i));
     }
-    return new Text(words).getText();
-    
+    return new Text(words).toString();
   }
 
   public void train(InstanceList instanceList) {
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     final CRF crf = new CRF(instanceList.getPipe(), (Pipe) null);
     crf.addStatesForLabelsConnectedAsIn(instanceList);
     // get trainer
