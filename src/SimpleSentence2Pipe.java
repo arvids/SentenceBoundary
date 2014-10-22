@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,12 +15,11 @@ class SimpleSentence2Pipe extends Pipe {
 
   private static final long    serialVersionUID = 1L;
   private static final Pattern splitPattern     = Pattern.compile("[^\\s]+");
-  private Symbols symbols;
+  private final Symbols        symbols;
 
   SimpleSentence2Pipe() {
     super(new Alphabet(), new LabelAlphabet());
     symbols = new Symbols();
-    
   }
 
   @Override
@@ -33,7 +31,6 @@ class SimpleSentence2Pipe extends Pipe {
     final LabelSequence labelSequence = new LabelSequence(getTargetAlphabet());
     // Should probably make a sentence class
     final ArrayList<Word> subSentenceInfo = new ArrayList<Word>();
-    
     for (final String line : lines) {
       if (line.length() == 0) {
         continue;
@@ -42,23 +39,18 @@ class SimpleSentence2Pipe extends Pipe {
       if (words.size() == 0) {
         continue;
       }
-      
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        
         final String currentWord = words.get(j).toString();
         final String plainCurrentWord = getPlainWord(currentWord);
         final Token token = new Token(currentWord);
-        
         if (symbols.wordEndsWithEOSSymbol(currentWord)) {
           token.setFeatureValue("endwithEOSSymb=" + getSymbol(currentWord), 1);
         }
-        
-        //last word in the sentence
+        // last word in the sentence
         if ((j + 1) == words.size()) {
           label = SentenceBoundary.EOS;
         }
-        
         token.setFeatureValue("TOKEN=" + currentWord, 1);
         tokenSequence.add(token);
         labelSequence.add(label);
@@ -72,18 +64,17 @@ class SimpleSentence2Pipe extends Pipe {
     return instance;
   }
 
-  
-
   private String getPlainWord(String word) {
     if (symbols.wordEndsWithSymbol(word)) {
       word = word.substring(0, word.length() - 1);
     } else if (symbols.wordStartsWithSymbol(word)) {
       word = word.substring(1, word.length());
-      }
-      return word; 
+    }
+    return word;
   }
+
   private String getSymbol(String word) {
-    return word.substring(word.length()-1,word.length());
+    return word.substring(word.length() - 1, word.length());
   }
 
   private HashMap<String, Integer> getWordFrequency(ArrayList<String> lines) {

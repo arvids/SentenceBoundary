@@ -10,11 +10,9 @@ class Symbols {
     symbols = new TreeSet<String>();
     isSymbols = new TreeSet<String>();
     eosSymbols = new TreeSet<String>();
-    
     eosSymbols.add(".");
     eosSymbols.add("!");
     eosSymbols.add("?");
-    
     isSymbols.add(":");
     isSymbols.add("]");
     isSymbols.add(")");
@@ -23,7 +21,6 @@ class Symbols {
     isSymbols.add("(");
     isSymbols.add("\\");
     isSymbols.add("/");
-    
     symbols.addAll(eosSymbols);
     symbols.addAll(isSymbols);
   }
@@ -39,8 +36,7 @@ class Symbols {
   public boolean isEosSymbol(String symbol) {
     return eosSymbols.contains(symbol);
   }
-  
-    
+
   public boolean wordEndsWithIsSymbol(String word) {
     if (word.length() > 0) {
       final String lastChar = word.substring(word.length() - 1, word.length());
@@ -49,7 +45,6 @@ class Symbols {
       }
     }
     return false;
-    
   }
 
   public boolean wordEndsWithEOSSymbol(String word) {
@@ -61,7 +56,7 @@ class Symbols {
     }
     return false;
   }
-  
+
   public boolean wordEndsWithSymbol(String word) {
     if (word.length() > 0) {
       final String lastChar = word.substring(word.length() - 1, word.length());
@@ -71,7 +66,7 @@ class Symbols {
     }
     return false;
   }
-  
+
   public boolean wordStartsWithSymbol(String word) {
     if (word.length() > 0) {
       final String firstChar = word.substring(0, 1);
@@ -81,5 +76,4 @@ class Symbols {
     }
     return false;
   }
-  
 }

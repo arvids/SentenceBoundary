@@ -38,7 +38,7 @@ public class SentenceBoundary {
   public SentenceBoundary(File file) {
     final ArrayList<String> testText = new ArrayList();
     testText
-        .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
+    .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
     SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
@@ -145,7 +145,7 @@ public class SentenceBoundary {
     final CRFTrainerByLabelLikelihood crfTrainer = new CRFTrainerByLabelLikelihood(crf);
     crfTrainer.trainIncremental(instanceList);
     crf.getInputPipe().getDataAlphabet().stopGrowth();
-    System.out.println("Trainingcomplete");
+    System.out.println("Training complete");
     System.out.println("Time: " + (System.currentTimeMillis() - start));
   }
 

@@ -11,19 +11,8 @@ public class Test {
   private static final Pattern splitPattern = Pattern.compile("[^\\s]+");
 
   public static void main(String[] args) {
-    // String test = "hejsan hoppsan korv";
-    // System.out.println("TEST: " + test);
-    // System.out.println("LENGTH: " + test.length());
-    //
-    // ArrayList<Word> words = getWords(test);
-    //
-    // for (Word word: words) {
-    // System.out.println(word.getWord());
-    // }
-    // testUkWacRead();
-    // testMakeTrainingData();
     final File file = new File("/Users/Arvid/Dropbox/ukWac/UKWAC-25.xml");
-    // System.out.println(file.getAbsolutePath());
+    System.out.println(file.getAbsolutePath());
     new SentenceBoundary(file);
   }
 

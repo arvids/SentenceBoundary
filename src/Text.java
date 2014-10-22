@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class Text {
 
-  private String text;
+  private final String text;
 
   public Text(ArrayList<Word> words) {
     boolean capitalizeNextWord = true;
@@ -21,12 +21,12 @@ public class Text {
         capitalizeNextWord = false;
       }
     }
-    this.text = sb.toString().trim();
+    text = sb.toString().trim();
   }
 
   @Override
   public String toString() {
-    return this.text;
+    return text;
   }
 
   private String capitalize(String word) {
