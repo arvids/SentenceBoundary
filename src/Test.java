@@ -7,34 +7,33 @@ import cc.mallet.types.FeatureVectorSequence;
 import cc.mallet.types.InstanceList;
 
 public class Test {
-  
-  private static final Pattern splitPattern     = Pattern.compile("[^\\s]+");
+
+  private static final Pattern splitPattern = Pattern.compile("[^\\s]+");
 
   public static void main(String[] args) {
-//    String test = "hejsan hoppsan korv";
-//    System.out.println("TEST: " + test);
-//    System.out.println("LENGTH: " + test.length());
-//    
-//    ArrayList<Word> words = getWords(test);
-//    
-//    for (Word word: words) {
-//      System.out.println(word.getWord());
-//    }
-    
+    // String test = "hejsan hoppsan korv";
+    // System.out.println("TEST: " + test);
+    // System.out.println("LENGTH: " + test.length());
+    //
+    // ArrayList<Word> words = getWords(test);
+    //
+    // for (Word word: words) {
+    // System.out.println(word.getWord());
+    // }
     // testUkWacRead();
-    //testMakeTrainingData();
+    // testMakeTrainingData();
     final File file = new File("/Users/Arvid/Dropbox/ukWac/UKWAC-25.xml");
-    //System.out.println(file.getAbsolutePath());
+    // System.out.println(file.getAbsolutePath());
     new SentenceBoundary(file);
-    
   }
 
   private static void testMakeTrainingData() {
     final long start = System.currentTimeMillis();
     final File file = new File("/Users/Arvid/Dropbox/ukWac/UKWAC-25.xml");
     System.out.println(file.getAbsolutePath());
-    
-    final InstanceList test = SentenceBoundary.createTrainingData(SentenceBoundary.chunks(SentenceBoundary.readUkWac(file), 20));
+    final InstanceList test =
+        SentenceBoundary.createTrainingData(SentenceBoundary.chunks(
+            SentenceBoundary.readUkWac(file), 20));
     final FeatureVectorSequence testData = (FeatureVectorSequence) test.get(0).getData();
     System.out.println("tid: ");
     System.out.println((System.currentTimeMillis() - start));
@@ -48,7 +47,7 @@ public class Test {
       System.out.println(sentence);
     }
   }
-  
+
   private static ArrayList<Word> getWords(String line) {
     final Matcher matcher = splitPattern.matcher(line);
     final ArrayList<Word> words = new ArrayList<Word>();
