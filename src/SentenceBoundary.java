@@ -90,7 +90,8 @@ public class SentenceBoundary {
     final ArrayList<String> sentences = new ArrayList<String>();
     final Symbols symbols = new Symbols();
     final StringBuilder sb = new StringBuilder();;
-    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+    try { 
+      BufferedReader br = new BufferedReader(new FileReader(file));
       for (String line; (line = br.readLine()) != null;) {
         if (line.startsWith("<text")) {
           continue;
