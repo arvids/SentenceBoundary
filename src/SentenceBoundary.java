@@ -1,10 +1,17 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import cc.mallet.fst.CRF;
 import cc.mallet.fst.CRFTrainerByLabelLikelihood;
@@ -19,7 +26,7 @@ import cc.mallet.types.Sequence;
 
 public class SentenceBoundary {
 
-  private static int          numberOfSentences;
+  private int          numberOfSentences;
   private static int          numberOfWords;
   private static final int    numberOfChunks       = 20;
   private static int          chunkSize;
@@ -34,6 +41,8 @@ public class SentenceBoundary {
   public static final int[][] uniGram              = new int[][] { {-1}, {0}, {1}};
   public static final int[][] biGram               = new int[][] { {-1, 0}, {0, 1}};
   public static final int[][] triGram              = new int[][] {{-1, 0, 1}};
+  
+  public SentenceBoundary() {}
 
   public SentenceBoundary(File file) {
     this(file, Integer.MAX_VALUE);
@@ -41,28 +50,36 @@ public class SentenceBoundary {
   
   public SentenceBoundary(File file, int numberOfSentences) {
     this.numberOfSentences = numberOfSentences;
-    final ArrayList<String> testText = new ArrayList();
+    final ArrayList<String> testText = new ArrayList<String>();
     testText
         .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
     SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
-    final ArrayList<String> sentences = readUkWac(file, numberOfSentences);
-    numberOfSentences = sentences.size();
-    System.out.println("Converted " + numberOfWords + " words to " + numberOfSentences
+    final ArrayList<String> sentences = readUkWac(file, this.numberOfSentences);
+    this.numberOfSentences = sentences.size();
+    System.out.println("Converted " + numberOfWords + " words to " + this.numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
-    chunkSize = numberOfSentences / numberOfChunks;
+    chunkSize = this.numberOfSentences / numberOfChunks;
     System.out.println("ChunkSize: " + chunkSize);
     start = System.currentTimeMillis();
     final ArrayList<ArrayList<String>> sentencesChunks = chunks(sentences, chunkSize);
-    System.out.println("Split " + numberOfSentences + " in to " + sentencesChunks.size()
+    System.out.println("Split " + this.numberOfSentences + " in to " + sentencesChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
-    final InstanceList instanceList = createTrainingDataFromChunks(sentencesChunks);
+    final InstanceList instanceList = createTrainningDataFromSentences(sentencesChunks);
     train(instanceList);
     System.out.println(predict(testText));
   }
   
-  public static InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
+  public CRF getCRF() {
+    return crf;
+  }
+  
+  public void setCRF(CRF crf) {
+    this.crf = crf;
+  }
+  
+  public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
@@ -71,9 +88,6 @@ public class SentenceBoundary {
         new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
-    double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;
-    double total = chunkPercentage;
-    double i = 0.0;
     final long start = System.currentTimeMillis();
     instanceList.addThruPipe(new Instance(sentences, "", "", file.getName()));
     System.out.println("Completed: " + sentences.size() + "sentences in "
@@ -81,7 +95,7 @@ public class SentenceBoundary {
     return instanceList;
   }
 
-  public static InstanceList createTrainingDataFromChunks(ArrayList<ArrayList<String>> sentencesChunks) {
+  public  InstanceList createTrainningDataFromSentences(ArrayList<ArrayList<String>> sentencesChunks) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
@@ -184,11 +198,7 @@ public class SentenceBoundary {
   }
 
   public String predict(ArrayList<String> sentences) {
-    System.out.println("Predict ArrayList");
     final long start = System.currentTimeMillis();
-    System.out.println("CRF: " + crf.toString());
-    Pipe inputPipe = crf.getInputPipe();
-    System.out.println("Pipe: " + inputPipe.toString());
     final Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
     System.out.println("Predict complete");
     System.out.println("Time: " + (System.currentTimeMillis() - start));
@@ -196,8 +206,8 @@ public class SentenceBoundary {
   }
 
   public String predict(Instance instance) {
-    System.out.println("Predict Instance");
     final Sequence input = (Sequence) instance.getData();
+    @SuppressWarnings("unchecked")
     final ArrayList<Word> words = (ArrayList<Word>) instance.getName();
     final ArrayList<String> labels = new ArrayList<String>();
     final Sequence<String> labelresults = crf.transduce(input);
@@ -211,7 +221,6 @@ public class SentenceBoundary {
     final long start = System.currentTimeMillis();
     crf = new CRF(instanceList.getPipe(), (Pipe) null);
     crf.addStatesForLabelsConnectedAsIn(instanceList);
-    // get trainer
     final CRFTrainerByLabelLikelihood crfTrainer = new CRFTrainerByLabelLikelihood(crf);
     crfTrainer.trainIncremental(instanceList);
     crf.getInputPipe().getDataAlphabet().stopGrowth();
@@ -227,4 +236,48 @@ public class SentenceBoundary {
     }
     return chunks;
   }
+  
+  public void writeCRF(String filename) {
+    if (crf == null) {
+        new IllegalStateException("CRF not initialized");
+    }
+    
+    try {
+      FileOutputStream fos = new FileOutputStream(new File(filename + ".gz"));
+      GZIPOutputStream gout = new GZIPOutputStream(fos);
+      ObjectOutputStream oos = new ObjectOutputStream(gout);
+      oos.writeObject(this.crf);
+      oos.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(0);
+    }
+  }
+  
+  public void writeSentences(ArrayList<String> sentences,String filename) {
+    try {
+      FileWriter writer = new FileWriter(filename);
+      for (String sentence: sentences) {
+        writer.write(sentence.toString() + "\n");
+      }
+      writer.flush();
+      writer.close();
+
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(0);
+    }
+    
+  }
+  
+  public void readCRF(String filename) throws IOException, FileNotFoundException, ClassNotFoundException {
+    FileInputStream fis = new FileInputStream(new File(filename));
+    GZIPInputStream gin = new GZIPInputStream(fis);
+    ObjectInputStream ois = new ObjectInputStream(gin);
+    this.crf = (CRF) ois.readObject();
+    ois.close();
+    crf.getInputPipe().getDataAlphabet().stopGrowth();
+  }
+  
+  
 }

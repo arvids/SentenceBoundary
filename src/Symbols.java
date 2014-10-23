@@ -1,6 +1,9 @@
+import java.io.Serializable;
 import java.util.TreeSet;
 
-class Symbols {
+class Symbols  implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   private final TreeSet<String> symbols;
   private final TreeSet<String> isSymbols;
