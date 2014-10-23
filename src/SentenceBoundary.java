@@ -38,7 +38,7 @@ public class SentenceBoundary {
   public SentenceBoundary(File file) {
     final ArrayList<String> testText = new ArrayList();
     testText
-    .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
+        .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
     SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
@@ -90,8 +90,8 @@ public class SentenceBoundary {
     final ArrayList<String> sentences = new ArrayList<String>();
     final Symbols symbols = new Symbols();
     final StringBuilder sb = new StringBuilder();;
-    try { 
-      BufferedReader br = new BufferedReader(new FileReader(file));
+    try {
+      final BufferedReader br = new BufferedReader(new FileReader(file));
       for (String line; (line = br.readLine()) != null;) {
         if (line.startsWith("<text")) {
           continue;
@@ -111,6 +111,46 @@ public class SentenceBoundary {
           }
         }
       }
+      br.close();
+    } catch (final FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (final IOException e) {
+      e.printStackTrace();
+    }
+    return sentences;
+  }
+  
+  public static ArrayList<String> readPartOfUkWac(File file, int numberOfSentences) {
+    final ArrayList<String> sentences = new ArrayList<String>();
+    final Symbols symbols = new Symbols();
+    final StringBuilder sb = new StringBuilder();;
+    int i = 0;
+    try {
+      final BufferedReader br = new BufferedReader(new FileReader(file));
+      for (String line; (line = br.readLine()) != null;) {
+        if (i == numberOfSentences) {
+          break;
+        }
+        if (line.startsWith("<text")) {
+          continue;
+        } else if (line.equals("<s>")) {
+          sb.setLength(0);
+          continue;
+        } else if (line.equals("</s>")) {
+          sentences.add(sb.toString());
+          i++;
+          continue;
+        } else {
+          final String s = line.split("\\s")[0];
+          numberOfWords++;
+          if (symbols.isEosSymbol(s)) {
+            sb.append(s);
+          } else {
+            sb.append(" " + s);
+          }
+        }
+      }
+      br.close();
     } catch (final FileNotFoundException e) {
       e.printStackTrace();
     } catch (final IOException e) {

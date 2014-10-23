@@ -11,10 +11,15 @@ public class Test {
   private static final Pattern splitPattern = Pattern.compile("[^\\s]+");
 
   public static void main(String[] args) {
+    testPartOfUkWacRead();
+  }
+  
+  private static void testSentenceBoundary() {
     final File file = new File("/Users/Arvid/Dropbox/ukWac/UKWAC-25.xml");
     System.out.println(file.getAbsolutePath());
     new SentenceBoundary(file);
   }
+  
 
   private static void testMakeTrainingData() {
     final long start = System.currentTimeMillis();
@@ -52,5 +57,15 @@ public class Test {
       words.add(new Word(word));
     }
     return words;
+  }
+  
+  private static void testPartOfUkWacRead() {
+    final File file = new File("/Users/Arvid/DropBox/ukWac/UKWAC-25.xml");
+    System.out.println(file.getAbsolutePath());
+    final ArrayList<String> sentences = SentenceBoundary.readPartOfUkWac(file, 10);
+    for (final String sentence : sentences) {
+      System.out.println(sentence);
+    }
+    
   }
 }
