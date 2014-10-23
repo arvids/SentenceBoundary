@@ -36,13 +36,18 @@ public class SentenceBoundary {
   public static final int[][] triGram              = new int[][] {{-1, 0, 1}};
 
   public SentenceBoundary(File file) {
+    this(file, Integer.MAX_VALUE);
+  }
+  
+  public SentenceBoundary(File file, int numberOfSentences) {
+    this.numberOfSentences = numberOfSentences;
     final ArrayList<String> testText = new ArrayList();
     testText
         .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
     SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
-    final ArrayList<String> sentences = readUkWac(file);
+    final ArrayList<String> sentences = readUkWac(file, numberOfSentences);
     numberOfSentences = sentences.size();
     System.out.println("Converted " + numberOfWords + " words to " + numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
@@ -52,12 +57,31 @@ public class SentenceBoundary {
     final ArrayList<ArrayList<String>> sentencesChunks = chunks(sentences, chunkSize);
     System.out.println("Split " + numberOfSentences + " in to " + sentencesChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
-    final InstanceList instanceList = createTrainingData(sentencesChunks);
+    final InstanceList instanceList = createTrainingDataFromChunks(sentencesChunks);
     train(instanceList);
     System.out.println(predict(testText));
   }
+  
+  public static InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
+    final LabelAlphabet labelAlphabet = new LabelAlphabet();
+    labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
+    labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
+    
+    final Pipe pipe =
+        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
+            new TokenSequence2FeatureVectorSequence(true, true)});
+    final InstanceList instanceList = new InstanceList(pipe);
+    double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;
+    double total = chunkPercentage;
+    double i = 0.0;
+    final long start = System.currentTimeMillis();
+    instanceList.addThruPipe(new Instance(sentences, "", "", file.getName()));
+    System.out.println("Completed: " + sentences.size() + "sentences in "
+          + (System.currentTimeMillis() - start) + " ms");
+    return instanceList;
+  }
 
-  public static InstanceList createTrainingData(ArrayList<ArrayList<String>> sentencesChunks) {
+  public static InstanceList createTrainingDataFromChunks(ArrayList<ArrayList<String>> sentencesChunks) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
@@ -120,7 +144,7 @@ public class SentenceBoundary {
     return sentences;
   }
   
-  public static ArrayList<String> readPartOfUkWac(File file, int numberOfSentences) {
+  public static ArrayList<String> readUkWac(File file, int numberOfSentences) {
     final ArrayList<String> sentences = new ArrayList<String>();
     final Symbols symbols = new Symbols();
     final StringBuilder sb = new StringBuilder();;
@@ -160,7 +184,11 @@ public class SentenceBoundary {
   }
 
   public String predict(ArrayList<String> sentences) {
+    System.out.println("Predict ArrayList");
     final long start = System.currentTimeMillis();
+    System.out.println("CRF: " + crf.toString());
+    Pipe inputPipe = crf.getInputPipe();
+    System.out.println("Pipe: " + inputPipe.toString());
     final Instance instance = crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", ""));
     System.out.println("Predict complete");
     System.out.println("Time: " + (System.currentTimeMillis() - start));
@@ -168,6 +196,7 @@ public class SentenceBoundary {
   }
 
   public String predict(Instance instance) {
+    System.out.println("Predict Instance");
     final Sequence input = (Sequence) instance.getData();
     final ArrayList<Word> words = (ArrayList<Word>) instance.getName();
     final ArrayList<String> labels = new ArrayList<String>();
@@ -180,7 +209,7 @@ public class SentenceBoundary {
 
   public void train(InstanceList instanceList) {
     final long start = System.currentTimeMillis();
-    final CRF crf = new CRF(instanceList.getPipe(), (Pipe) null);
+    crf = new CRF(instanceList.getPipe(), (Pipe) null);
     crf.addStatesForLabelsConnectedAsIn(instanceList);
     // get trainer
     final CRFTrainerByLabelLikelihood crfTrainer = new CRFTrainerByLabelLikelihood(crf);
