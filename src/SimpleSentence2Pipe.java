@@ -30,7 +30,7 @@ class SimpleSentence2Pipe extends Pipe {
     final TokenSequence tokenSequence = new TokenSequence();
     final LabelSequence labelSequence = new LabelSequence(getTargetAlphabet());
     // Should probably make a sentence class
-    final ArrayList<Word> subSentenceInfo = new ArrayList<Word>();
+    final ArrayList<Word> wordInfo = new ArrayList<Word>();
     for (final String line : lines) {
       if (line.length() == 0) {
         continue;
@@ -39,27 +39,33 @@ class SimpleSentence2Pipe extends Pipe {
       if (words.size() == 0) {
         continue;
       }
+      // loop through the sentence
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        final String currentWord = words.get(j).toString();
-        final String plainCurrentWord = getPlainWord(currentWord);
-        final Token token = new Token(currentWord);
-        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
-          token.setFeatureValue("endwithEOSSymb=" + getSymbol(currentWord), 1);
-        }
-        // last word in the sentence
         if ((j + 1) == words.size()) {
           label = SentenceBoundary.EOS;
         }
-        token.setFeatureValue("TOKEN=" + currentWord, 1);
+        final String currentWord = words.get(j).toString();
+        final String plainCurrentWord = getPlainWord(currentWord);
+        final Token token = new Token(plainCurrentWord);
+        if (j == 0) {
+          token.setFeatureValue("BOS", 1);
+        } else if ((j + 1) == words.size()) {
+          label = SentenceBoundary.EOS;
+          token.setFeatureValue("EOS", 1);
+        }
+        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
+          token.setFeatureValue("SYMBOL=" + getSymbol(currentWord), 1);
+        }
+        token.setFeatureValue("TOKEN=" + plainCurrentWord, 1);
         tokenSequence.add(token);
         labelSequence.add(label);
       }
-      subSentenceInfo.addAll(words);
+      wordInfo.addAll(words);
     }
     instance.setData(tokenSequence);
     instance.setTarget(labelSequence);
-    instance.setName(subSentenceInfo);
+    instance.setName(wordInfo);
     instance.setSource(abstractFileName);
     return instance;
   }

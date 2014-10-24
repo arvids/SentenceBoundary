@@ -26,7 +26,7 @@ import cc.mallet.types.Sequence;
 
 public class SentenceBoundary {
 
-  private int          numberOfSentences;
+  private int                 numberOfSentences;
   private static int          numberOfWords;
   private static final int    numberOfChunks       = 20;
   private static int          chunkSize;
@@ -41,18 +41,22 @@ public class SentenceBoundary {
   public static final int[][] uniGram              = new int[][] { {-1}, {0}, {1}};
   public static final int[][] biGram               = new int[][] { {-1, 0}, {0, 1}};
   public static final int[][] triGram              = new int[][] {{-1, 0, 1}};
-  
-  public SentenceBoundary() {}
+  public static final int[][] conjunctions         = { {-5}, {-4}, {-3}, {-2}, {-1}, {0}, {1}, {2},
+      {3}, {4}, {5}, {-2, -1, 0}, {-1, 0}, {0, 1}, {0, 1, 2}};
+
+  public SentenceBoundary() {
+    file = new File("FAKE");
+  }
 
   public SentenceBoundary(File file) {
     this(file, Integer.MAX_VALUE);
   }
-  
+
   public SentenceBoundary(File file, int numberOfSentences) {
     this.numberOfSentences = numberOfSentences;
     final ArrayList<String> testText = new ArrayList<String>();
     testText
-        .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
+    .add("a pony walks into a police building it happens in england a security camera captures the moment an officer tries to make the pony leave it does not care it leaves later when it wants to");
     SentenceBoundary.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
@@ -68,39 +72,40 @@ public class SentenceBoundary {
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
     final InstanceList instanceList = createTrainningDataFromSentences(sentencesChunks);
     train(instanceList);
-    System.out.println(predict(testText));
+    writeCRF("crftest");
   }
-  
+
   public CRF getCRF() {
     return crf;
   }
-  
+
   public void setCRF(CRF crf) {
     this.crf = crf;
   }
-  
+
   public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
-    
     final Pipe pipe =
-        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
+        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(),
+            new OffsetConjunctions(conjunctions),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
     final long start = System.currentTimeMillis();
     instanceList.addThruPipe(new Instance(sentences, "", "", file.getName()));
     System.out.println("Completed: " + sentences.size() + "sentences in "
-          + (System.currentTimeMillis() - start) + " ms");
+        + (System.currentTimeMillis() - start) + " ms");
     return instanceList;
   }
 
-  public  InstanceList createTrainningDataFromSentences(ArrayList<ArrayList<String>> sentencesChunks) {
+  public InstanceList createTrainningDataFromSentences(ArrayList<ArrayList<String>> sentencesChunks) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
     final Pipe pipe =
-        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(), new OffsetConjunctions(uniGram),
+        new SerialPipes(new Pipe[] {new SimpleSentence2Pipe(),
+            new OffsetConjunctions(conjunctions),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
     double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;
@@ -137,7 +142,7 @@ public class SentenceBoundary {
           sb.setLength(0);
           continue;
         } else if (line.equals("</s>")) {
-          sentences.add(sb.toString());
+          sentences.add(sb.toString().toLowerCase());
           continue;
         } else {
           final String s = line.split("\\s")[0];
@@ -157,7 +162,7 @@ public class SentenceBoundary {
     }
     return sentences;
   }
-  
+
   public static ArrayList<String> readUkWac(File file, int numberOfSentences) {
     final ArrayList<String> sentences = new ArrayList<String>();
     final Symbols symbols = new Symbols();
@@ -236,48 +241,44 @@ public class SentenceBoundary {
     }
     return chunks;
   }
-  
+
   public void writeCRF(String filename) {
     if (crf == null) {
-        new IllegalStateException("CRF not initialized");
+      new IllegalStateException("CRF not initialized");
     }
-    
     try {
-      FileOutputStream fos = new FileOutputStream(new File(filename + ".gz"));
-      GZIPOutputStream gout = new GZIPOutputStream(fos);
-      ObjectOutputStream oos = new ObjectOutputStream(gout);
-      oos.writeObject(this.crf);
+      final FileOutputStream fos = new FileOutputStream(new File(filename + ".gz"));
+      final GZIPOutputStream gout = new GZIPOutputStream(fos);
+      final ObjectOutputStream oos = new ObjectOutputStream(gout);
+      oos.writeObject(crf);
       oos.close();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
       System.exit(0);
     }
   }
-  
-  public void writeSentences(ArrayList<String> sentences,String filename) {
+
+  public void writeSentences(ArrayList<String> sentences, String filename) {
     try {
-      FileWriter writer = new FileWriter(filename);
-      for (String sentence: sentences) {
+      final FileWriter writer = new FileWriter(filename);
+      for (final String sentence : sentences) {
         writer.write(sentence.toString() + "\n");
       }
       writer.flush();
       writer.close();
-
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
       System.exit(0);
     }
-    
   }
-  
-  public void readCRF(String filename) throws IOException, FileNotFoundException, ClassNotFoundException {
-    FileInputStream fis = new FileInputStream(new File(filename));
-    GZIPInputStream gin = new GZIPInputStream(fis);
-    ObjectInputStream ois = new ObjectInputStream(gin);
-    this.crf = (CRF) ois.readObject();
+
+  public void readCRF(String filename) throws IOException, FileNotFoundException,
+      ClassNotFoundException {
+    final FileInputStream fis = new FileInputStream(new File(filename));
+    final GZIPInputStream gin = new GZIPInputStream(fis);
+    final ObjectInputStream ois = new ObjectInputStream(gin);
+    crf = (CRF) ois.readObject();
     ois.close();
     crf.getInputPipe().getDataAlphabet().stopGrowth();
   }
-  
-  
 }

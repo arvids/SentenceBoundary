@@ -7,7 +7,7 @@ public class Word {
     this.word = word;
     label = "O";
   }
-  
+
   public Word(String word, String label) {
     this.word = word;
     this.label = label;
