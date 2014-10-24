@@ -1,10 +1,9 @@
 import java.io.Serializable;
 import java.util.TreeSet;
 
-class Symbols  implements Serializable {
+class Symbols implements Serializable {
 
-  private static final long serialVersionUID = 1L;
-
+  private static final long     serialVersionUID = 1L;
   private final TreeSet<String> symbols;
   private final TreeSet<String> isSymbols;
   private final TreeSet<String> eosSymbols;
@@ -24,6 +23,7 @@ class Symbols  implements Serializable {
     isSymbols.add("(");
     isSymbols.add("\\");
     isSymbols.add("/");
+    isSymbols.add(",");
     symbols.addAll(eosSymbols);
     symbols.addAll(isSymbols);
   }
