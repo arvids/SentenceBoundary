@@ -52,45 +52,47 @@ class Sentence2Pipe extends Pipe {
         final String plainCurrentWord = getPlainWord(currentWord);
         final Token token = new Token(plainCurrentWord);
         
-        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
-          token.setFeatureValue(getSymbol(currentWord), 1);
-        }
-        //current word as feature
         token.setFeatureValue(plainCurrentWord + "@0", 1);
         
-        //unigram for each word before current word.
-        for (int k = 1; j - k > 0 & k < 5; k++) {
-          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
-        }
-        
-        //unigram of each word around current word.
-        for (int l = 1; j + l < words.size() & l < 5; l++) {
-          token.setFeatureValue(words.get(j+l).toString() + "@" + l, 1);
-        }
-        for (int k = 1; j - k > 0 & k < 5; k++) {
-          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
-        }
-        
-        //bigram for each set of words around current word.
-        if (j-2 > 0) {
-          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "@" + (j-1) + "_" + (j-2), 1);
-        }
-        if (j+2 < words.size()) {
-          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "@" + (j+1) + "_" + (j+2), 1);
-        }
-        
-        //trigram around word
-        if (j-3 > 0) {
-          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "_" + words.get(j-3).toString() + "@" + (j-1) + "_" + (j-3), 1);
-        }
-        if (j+3 < words.size()) {
-          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "_" + words.get(j+3).toString() + "@" + (j+1) + "_" + (j+3), 1);
-        }
-        
-        //position 
-        if (j<3) {
-          token.setFeatureValue("START", 1);
-        } 
+//        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
+//          token.setFeatureValue(getSymbol(currentWord), 1);
+//        }
+//        //current word as feature
+//        
+//        
+//        //unigram for each word before current word.
+//        for (int k = 1; j - k > 0 & k < 5; k++) {
+//          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
+//        }
+//        
+//        //unigram of each word around current word.
+//        for (int l = 1; j + l < words.size() & l < 5; l++) {
+//          token.setFeatureValue(words.get(j+l).toString() + "@" + l, 1);
+//        }
+//        for (int k = 1; j - k > 0 & k < 5; k++) {
+//          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
+//        }
+//        
+//        //bigram for each set of words around current word.
+//        if (j-2 > 0) {
+//          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "@" + (j-1) + "_" + (j-2), 1);
+//        }
+//        if (j+2 < words.size()) {
+//          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "@" + (j+1) + "_" + (j+2), 1);
+//        }
+//        
+//        //trigram around word
+//        if (j-3 > 0) {
+//          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "_" + words.get(j-3).toString() + "@" + (j-1) + "_" + (j-3), 1);
+//        }
+//        if (j+3 < words.size()) {
+//          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "_" + words.get(j+3).toString() + "@" + (j+1) + "_" + (j+3), 1);
+//        }
+//        
+//        //position 
+//        if (j<3) {
+//          token.setFeatureValue("START", 1);
+//        } 
 //        else if (j > words.size() - 3) {
 //          token.setFeatureValue("END", 1);
 //        }

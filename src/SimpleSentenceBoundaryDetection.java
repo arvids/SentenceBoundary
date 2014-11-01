@@ -318,12 +318,13 @@ public class SimpleSentenceBoundaryDetection {
         String prediction = words.get(l).getLabel();
         String original = orgLabels.get(l);
 
-          if (prediction.equals(original))
+          if (prediction.equals(original)) {
             if (symbols.wordEndsWithEOSSymbol(word)) {
               truePositive++;
             } else {
               trueNegative++;
             }
+          }
           else {
             if (prediction.equals("EOS") && original.equals("IS"))
               falsePositive++;
