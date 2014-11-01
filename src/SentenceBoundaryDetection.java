@@ -25,7 +25,7 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.Sequence;
 
-public class SimpleSentenceBoundaryDetection {
+public class SentenceBoundaryDetection {
 
   private int                 numberOfSentences;
   private static int          numberOfWords;
@@ -39,17 +39,17 @@ public class SimpleSentenceBoundaryDetection {
   private static ArrayList<String> testData;
   
 
-  public SimpleSentenceBoundaryDetection() {
+  public SentenceBoundaryDetection() {
     file = new File("FAKE");
   }
 
-  public SimpleSentenceBoundaryDetection(File file) {
+  public SentenceBoundaryDetection(File file) {
     this(file, Integer.MAX_VALUE);
   }
 
-  public SimpleSentenceBoundaryDetection(File file, int numberOfSentences) {
+  public SentenceBoundaryDetection(File file, int numberOfSentences) {
     this.numberOfSentences = numberOfSentences;
-    SimpleSentenceBoundaryDetection.file = file;
+    SentenceBoundaryDetection.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
     setData9010(file, numberOfSentences);
@@ -80,8 +80,8 @@ public class SimpleSentenceBoundaryDetection {
 
   public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
-    labelAlphabet.lookupLabel(SimpleSentenceBoundaryDetection.EOS, true);
-    labelAlphabet.lookupLabel(SimpleSentenceBoundaryDetection.IS, true);
+    labelAlphabet.lookupLabel(SentenceBoundaryDetection.EOS, true);
+    labelAlphabet.lookupLabel(SentenceBoundaryDetection.IS, true);
     final Pipe pipe =
         new SerialPipes(new Pipe[] {new Sentence2Pipe(),
             new TokenSequence2FeatureVectorSequence(true, true)});
@@ -138,6 +138,8 @@ public class SimpleSentenceBoundaryDetection {
       for (String line; (line = br.readLine()) != null;) {
         if (line.startsWith("<text")) {
           continue;
+        } else if (line.startsWith("</text")) {
+          continue;
         } else if (line.equals("<s>")) {
           sb.setLength(0);
           continue;
@@ -176,6 +178,8 @@ public class SimpleSentenceBoundaryDetection {
         }
         if (line.startsWith("<text")) {
           continue;
+        } else if (line.startsWith("</text")) {
+          continue;
         } else if (line.equals("<s>")) {
           sb.setLength(0);
           continue;
@@ -200,6 +204,58 @@ public class SimpleSentenceBoundaryDetection {
       e.printStackTrace();
     }
     return sentences;
+  }
+  
+  private void setData3SentencesAtATime9010(File file, int numberOfSentences) {
+    trainData = new ArrayList<String>();
+    testData = new ArrayList<String>();
+    Random random = new Random();
+    final Symbols symbols = new Symbols();
+    final StringBuilder sb = new StringBuilder();;
+    int i = 0;
+    int j = 0;
+    try {
+      final BufferedReader br = new BufferedReader(new FileReader(file));
+      for (String line; (line = br.readLine()) != null;) {
+        if (i >= numberOfSentences && j == 0) {
+          break;
+        }
+        if (line.startsWith("<text")) {
+          continue;
+        } else if (line.startsWith("</text")) {
+          continue;
+        } else if (line.equals("<s>")) {
+          continue;
+        } else if (line.equals("</s>")) {
+          if (j == 3) {
+          if (random.nextInt(10) == 9) {
+            testData.add(sb.toString());
+          } else {
+            trainData.add(sb.toString());
+            i += j;
+          }
+          sb.setLength(0);
+          j = 0;
+          }
+          continue;
+        } else {
+          final String s = line.split("\\s")[0];
+          numberOfWords++;
+          if (symbols.isEosSymbol(s)) {
+            sb.append(s);
+          } else {
+            sb.append(" " + s);
+          }
+        }
+      }
+      br.close();
+    } catch (final FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (final IOException e) {
+      e.printStackTrace();
+    }
+    System.out.println("Train: " + trainData.size());
+    System.out.println("Test: " + testData.size());
   }
   
   private void setData9010(File file, int numberOfSentences) {
