@@ -287,6 +287,7 @@ public class SimpleSentenceBoundaryDetection {
     }
     final Symbols symbols = new Symbols();
     int truePositive = 0;
+    int trueNegative = 0;
     int falsePositive = 0;
     int falseNegative = 0;
     
@@ -317,16 +318,19 @@ public class SimpleSentenceBoundaryDetection {
         String prediction = words.get(l).getLabel();
         String original = orgLabels.get(l);
 
-        if (symbols.wordEndsWithEOSSymbol(word)) { // evaluate only if
           if (prediction.equals(original))
-            truePositive++;
-          else { // store errors
+            if (symbols.wordEndsWithEOSSymbol(word)) {
+              truePositive++;
+            } else {
+              trueNegative++;
+            }
+          else {
             if (prediction.equals("EOS") && original.equals("IS"))
               falsePositive++;
             else if (prediction.equals("IS") && original.equals("EOS"))
               falseNegative++;
           }
-        }
+        
       }
     }
      
@@ -336,7 +340,9 @@ public class SimpleSentenceBoundaryDetection {
     double f1 = 2 * precision * recall / (precision + recall);
     
     
-    System.out.println("Total tests: " + truePositive + falsePositive + falseNegative);
+    System.out.println("Total tests: " + truePositive + trueNegative + falsePositive + falseNegative);
+    System.out.println("True positive: " + truePositive);
+    System.out.println("True negative: " + trueNegative);
     System.out.println("False positive: " + falsePositive);
     System.out.println("False negative: " + falseNegative);
     System.out.println("Recall: " + recall);
