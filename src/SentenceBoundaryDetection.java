@@ -393,11 +393,11 @@ public class SentenceBoundaryDetection {
      
     double precision = truePositive / (double)(truePositive + falsePositive);
     double recall = truePositive / (double)(truePositive + falseNegative);
-    double accuracy = truePositive / (double)(truePositive + falsePositive + falseNegative);
+    double accuracy = (truePositive + trueNegative) / (double)(truePositive + trueNegative + falsePositive + falseNegative);
     double f1 = 2 * precision * recall / (precision + recall);
     
     
-    System.out.println("Total tests: " + truePositive + trueNegative + falsePositive + falseNegative);
+    System.out.println("Total tests: " + (truePositive + trueNegative + falsePositive + falseNegative));
     System.out.println("True positive: " + truePositive);
     System.out.println("True negative: " + trueNegative);
     System.out.println("False positive: " + falsePositive);
