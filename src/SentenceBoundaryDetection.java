@@ -52,8 +52,8 @@ public class SentenceBoundaryDetection {
     SentenceBoundaryDetection.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
-    setData9010(file, numberOfSentences);
-        
+    //setData9010(file, numberOfSentences);
+    setData3SentencesAtATime9010(file, numberOfSentences);
     this.numberOfSentences = trainData.size();
     System.out.println("Converted " + numberOfWords + " words to " + this.numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
