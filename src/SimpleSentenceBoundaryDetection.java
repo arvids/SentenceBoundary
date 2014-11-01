@@ -335,13 +335,14 @@ public class SimpleSentenceBoundaryDetection {
     double accuracy = truePositive / (double)(truePositive + falsePositive + falseNegative);
     double f1 = 2 * precision * recall / (precision + recall);
     
-
-    System.out.println("False positive :" + falsePositive);
-    System.out.println("False negative :" + falseNegative);
-    System.out.println("Recall :" + recall);
-    System.out.println("Precision :" + precision);
-    System.out.println("F1 :" + f1);
-    System.out.println("Accuracy : " + accuracy);
+    
+    System.out.println("Total tests: " + truePositive + falsePositive + falseNegative);
+    System.out.println("False positive: " + falsePositive);
+    System.out.println("False negative: " + falseNegative);
+    System.out.println("Recall: " + recall);
+    System.out.println("Precision: " + precision);
+    System.out.println("F1: " + f1);
+    System.out.println("Accuracy: " + accuracy);
     
     
   }
