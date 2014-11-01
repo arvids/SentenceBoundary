@@ -24,6 +24,7 @@ class Symbols implements Serializable {
     isSymbols.add("\\");
     isSymbols.add("/");
     isSymbols.add(",");
+    isSymbols.add(";");
     symbols.addAll(eosSymbols);
     symbols.addAll(isSymbols);
   }
