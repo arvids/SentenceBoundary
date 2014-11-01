@@ -124,7 +124,7 @@ public class SimpleSentenceBoundaryDetection {
   
   public InstanceList createTestDataFromSentences(ArrayList<String> sentences) {
     InstanceList testData = new InstanceList(crf.getInputPipe());
-    testData.add(new Instance(sentences, "", "", ""));
+    testData.add(crf.getInputPipe().instanceFrom(new Instance(sentences, "", "", "")));
     return testData;
     
   }
