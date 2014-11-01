@@ -45,12 +45,17 @@ class Sentence2Pipe extends Pipe {
       // loop through the sentence
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        if ((j + 1) == words.size()) {
-          label = SentenceBoundary.EOS;
-        }
+//        if ((j + 1) == words.size()) {
+//          label = SentenceBoundary.EOS;
+//        }
         final String currentWord = words.get(j).toString();
         final String plainCurrentWord = getPlainWord(currentWord);
         final Token token = new Token(plainCurrentWord);
+        
+        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
+          //token.setFeatureValue(getSymbol(currentWord), 1);
+          label = SentenceBoundary.EOS;
+        }
         
         token.setFeatureValue(plainCurrentWord + "@0", 1);
         
