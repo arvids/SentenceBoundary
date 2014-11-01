@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +10,10 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.Token;
 import cc.mallet.types.TokenSequence;
 
+/**
+ * @author Arvid
+ * 
+ */
 class Sentence2Pipe extends Pipe {
 
   private static final long    serialVersionUID = 1L;
@@ -23,6 +26,9 @@ class Sentence2Pipe extends Pipe {
     symbols = new Symbols();
   }
 
+  /* (non-Javadoc)
+   * @see cc.mallet.pipe.Pipe#pipe(cc.mallet.types.Instance)
+   */
   @Override
   public Instance pipe(Instance instance) {
     
@@ -32,7 +38,7 @@ class Sentence2Pipe extends Pipe {
 
     final TokenSequence tokenSequence = new TokenSequence();
     final LabelSequence labelSequence = new LabelSequence(getTargetAlphabet());
-    // Should probably make a sentence class
+
     final ArrayList<Word> wordInfo = new ArrayList<Word>();
     for (final String line : lines) {
       if (line.length() == 0) {
@@ -59,41 +65,38 @@ class Sentence2Pipe extends Pipe {
         
         token.setFeatureValue(plainCurrentWord + "@0", 1);
         
-//        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
-//          token.setFeatureValue(getSymbol(currentWord), 1);
-//        }
-//        //current word as feature
-//        
-//        
-//        //unigram for each word before current word.
-//        for (int k = 1; j - k > 0 & k < 5; k++) {
-//          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
-//        }
-//        
-//        //unigram of each word around current word.
-//        for (int l = 1; j + l < words.size() & l < 5; l++) {
-//          token.setFeatureValue(words.get(j+l).toString() + "@" + l, 1);
-//        }
-//        for (int k = 1; j - k > 0 & k < 5; k++) {
-//          token.setFeatureValue(words.get(j-k).toString() + "@" + k, 1);
-//        }
-//        
-//        //bigram for each set of words around current word.
-//        if (j-2 > 0) {
-//          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "@" + (j-1) + "_" + (j-2), 1);
-//        }
-//        if (j+2 < words.size()) {
-//          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "@" + (j+1) + "_" + (j+2), 1);
-//        }
-//        
-//        //trigram around word
-//        if (j-3 > 0) {
-//          token.setFeatureValue(words.get(j-1).toString() + "_" + words.get(j-2).toString() + "_" + words.get(j-3).toString() + "@" + (j-1) + "_" + (j-3), 1);
-//        }
-//        if (j+3 < words.size()) {
-//          token.setFeatureValue(words.get(j+1).toString() + "_" + words.get(j+2).toString() + "_" + words.get(j+3).toString() + "@" + (j+1) + "_" + (j+3), 1);
-//        }
-//        
+        //current word as feature
+        
+        
+        //unigram for each word before current word.
+        for (int k = 1; j - k > 0 & k < 5; k++) {
+          token.setFeatureValue(getPlainWord(words.get(j-k).toString()) + "@" + k, 1);
+        }
+        
+        //unigram of each word around current word.
+        for (int l = 1; j + l < words.size() & l < WORD_WINDOW; l++) {
+          token.setFeatureValue(getPlainWord(words.get(j+l).toString()) + "@" + l, 1);
+        }
+        for (int k = 1; j - k > 0 & k < 5; k++) {
+          token.setFeatureValue(getPlainWord(words.get(j-k).toString()) + "@" + k, 1);
+        }
+        
+        //bigram for each set of words around current word.
+        if (j-2 > 0) {
+          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "@" + (j-1) + "_" + (j-2), 1);
+        }
+        if (j+2 < words.size()) {
+          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "@" + (j+1) + "_" + (j+2), 1);
+        }
+        
+        //trigram around word
+        if (j-3 > 0) {
+          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "_" + getPlainWord(words.get(j-3).toString()) + "@" + (j-1) + "_" + (j-3), 1);
+        }
+        if (j+3 < words.size()) {
+          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "_" + getPlainWord(words.get(j+3).toString()) + "@" + (j+1) + "_" + (j+3), 1);
+        }
+        
 //        //position 
 //        if (j<3) {
 //          token.setFeatureValue("START", 1);
@@ -127,29 +130,11 @@ class Sentence2Pipe extends Pipe {
     } else if (symbols.wordStartsWithSymbol(word)) {
       word = word.substring(1, word.length());
     }
-    return word;
+    return word.toLowerCase();
   }
 
   private String getSymbol(String word) {
     return word.substring(word.length() - 1, word.length());
-  }
-
-  private HashMap<String, Integer> getWordFrequency(ArrayList<String> lines) {
-    final HashMap<String, Integer> freq = new HashMap<String, Integer>();
-    for (int i = 0; i < lines.size(); i++) {
-      final String line = lines.get(i);
-      final ArrayList<Word> words = getWords(line);
-      for (int j = 0; j < words.size(); j++) {
-        final Word word = words.get(j);
-        int count = 0;
-        if (freq.containsKey(word.toString())) {
-          count = freq.get(word.toString());
-        }
-        count++;
-        freq.put(word.toString(), count);
-      }
-    }
-    return freq;
   }
 
   private ArrayList<Word> getWords(String line) {
