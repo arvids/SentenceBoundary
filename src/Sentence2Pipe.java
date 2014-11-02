@@ -70,16 +70,16 @@ class Sentence2Pipe extends Pipe {
         /*
          * Add uni-gram features, up to wordWindow.
          */
-        token.setFeatureValue(plainCurrentWord + "@0", 1);
+        /*token.setFeatureValue(plainCurrentWord + "@0", 1);
         for (int i = 1; ((j + i) < words.size()) & (i < wordWindow); i++) {
           token.setFeatureValue(getPlainWord(words.get(j + i).toString()) + "@" + i, 1);
         }
         for (int i = 1; ((j - i) > 0) & (i < 5); i++) {
           token.setFeatureValue(getPlainWord(words.get(j - i).toString()) + "@" + i, 1);
         }
-        /*
+        
          * Add bi-gram features, up to wordWindow
-         */
+         
         if (nGrams > 1) {
           int i = 0;
           while (((j - i - 1) > 0) && ((i - 1) < wordWindow)) {
@@ -96,9 +96,9 @@ class Sentence2Pipe extends Pipe {
             i++;
           }
         }
-        /*
+        
          * Add tri-gram features, up to wordWindow.
-         */
+         
         if (nGrams > 2) {
           int i = 0;
           while (((j - i - 2) > 0) && ((i - 2) < wordWindow)) {
@@ -117,6 +117,53 @@ class Sentence2Pipe extends Pipe {
                     + getPlainWord(words.get(j + i + 1).toString()) + "_"
                     + getPlainWord(words.get(j + i + 1).toString()) + "@" + (j + i) + "_"
                     + (j + i + 2), 1);
+            i++;
+          }
+        }*/
+        token.setFeatureValue(plainCurrentWord + "@WORD", 1);
+        for (int i = 1; ((j + i) < words.size()) & (i < wordWindow); i++) {
+          token.setFeatureValue(getPlainWord(words.get(j + i).toString()) + "@AFTER", 1);
+        }
+        for (int i = 1; ((j - i) > 0) & (i < 5); i++) {
+          token.setFeatureValue(getPlainWord(words.get(j - i).toString()) + "@BEFORE" + i, 1);
+        }
+        /*
+         * Add bi-gram features, up to wordWindow
+         */
+        if (nGrams > 1) {
+          int i = 0;
+          while (((j - i - 1) > 0) && ((i - 1) < wordWindow)) {
+            token.setFeatureValue(getPlainWord(words.get(j - i - 1).toString()) + "_"
+                + getPlainWord(words.get(j - i).toString()) + "@BEFORE", 1);
+            i++;
+          }
+          i = 0;
+          while (((j + i + 1) < wordWindow) && ((j + i + 1) < words.size())) {
+            token.setFeatureValue(
+                getPlainWord(words.get(j + i).toString()) + "_"
+                    + getPlainWord(words.get(j + i + 1).toString()) + "@AFTER", 1);
+            i++;
+          }
+        }
+        /*
+         * Add tri-gram features, up to wordWindow.
+         */
+        if (nGrams > 2) {
+          int i = 0;
+          while (((j - i - 2) > 0) && ((i - 2) < wordWindow)) {
+            token
+                .setFeatureValue(
+                    getPlainWord(words.get(j - i - 2).toString()) + "_"
+                        + getPlainWord(words.get(j - i - 1).toString()) + "_"
+                        + getPlainWord(words.get(j - i).toString()) + "@BEFORE", 1);
+            i++;
+          }
+          i = 0;
+          while (((j + i + 2) < wordWindow) && ((j + i + 2) < words.size())) {
+            token.setFeatureValue(
+                getPlainWord(words.get(j + i).toString()) + "_"
+                    + getPlainWord(words.get(j + i + 1).toString()) + "_"
+                    + getPlainWord(words.get(j + i + 1).toString()) + "@AFTER", 1);
             i++;
           }
         }
