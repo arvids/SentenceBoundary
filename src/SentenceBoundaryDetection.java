@@ -43,10 +43,10 @@ public class SentenceBoundaryDetection {
   }
 
   public SentenceBoundaryDetection(File file, int numberOfSentences) {
-    this(file, numberOfSentences, 3, 0.1);
+    this(file, numberOfSentences, 3, 3, 0.1);
   }
   
-  public SentenceBoundaryDetection(File file, int numberOfSentences, int numberOfSentencesPerLine, double testTrainRatio) {
+  public SentenceBoundaryDetection(File file, int numberOfSentences, int numberOfSentencesPerLine, int nGrams, double testTrainRatio) {
     this.numberOfSentences = numberOfSentences;
     SentenceBoundaryDetection.file = file;
     numberOfWords = 0;
@@ -61,21 +61,21 @@ public class SentenceBoundaryDetection {
     final ArrayList<ArrayList<String>> trainDataChunks = chunks(trainData, chunkSize);
     System.out.println("Split " + this.numberOfSentences + " in to " + trainDataChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
-    final InstanceList instanceList = createTrainningDataFromSentences(trainDataChunks);
+    final InstanceList instanceList = createTrainningDataFromSentences(trainDataChunks, nGrams);
     train(instanceList);
-    writeCRF("CRF_" + file.getName() + "_" + numberOfSentences + "_" + numberOfSentencesPerLine);
+    writeCRF("CRF_" + file.getName() + "_" + numberOfSentences + "_" + numberOfSentencesPerLine + "_" + nGrams + "-gram");
     if (testTrainRatio > 0) {
       evaluate();
     }
   }
 
 
-  public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
+  public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences, int nGrams) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundaryDetection.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundaryDetection.IS, true);
     final Pipe pipe =
-        new SerialPipes(new Pipe[] {new Sentence2Pipe(),
+        new SerialPipes(new Pipe[] {new Sentence2Pipe(nGrams),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
     final long start = System.currentTimeMillis();
@@ -85,12 +85,12 @@ public class SentenceBoundaryDetection {
     return instanceList;
   }
 
-  public InstanceList createTrainningDataFromSentences(ArrayList<ArrayList<String>> sentencesChunks) {
+  public InstanceList createTrainningDataFromSentences(ArrayList<ArrayList<String>> sentencesChunks, int nGrams) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
     labelAlphabet.lookupLabel(SentenceBoundary.EOS, true);
     labelAlphabet.lookupLabel(SentenceBoundary.IS, true);
     final Pipe pipe =
-        new SerialPipes(new Pipe[] {new Sentence2Pipe(),
+        new SerialPipes(new Pipe[] {new Sentence2Pipe(nGrams),
             new TokenSequence2FeatureVectorSequence(true, true)});
     final InstanceList instanceList = new InstanceList(pipe);
     double chunkPercentage = (chunkSize * 100.0) / numberOfSentences;

@@ -20,10 +20,16 @@ class Sentence2Pipe extends Pipe {
   private static final Pattern splitPattern     = Pattern.compile("[^\\s]+");
   private final Symbols        symbols;
   private static final int WORD_WINDOW = 5;
+  private final int nGrams;
 
-  Sentence2Pipe() {
+  Sentence2Pipe(int nGrams) {
     super(new Alphabet(), new LabelAlphabet());
     symbols = new Symbols();
+    if (nGrams > 0 && nGrams < 4) {
+      this.nGrams = nGrams;
+    } else {
+      this.nGrams = 3;
+    } 
   }
 
 
@@ -74,29 +80,32 @@ class Sentence2Pipe extends Pipe {
         for (int i = 1; j - i > 0 & i < 5; i++) {
           token.setFeatureValue(getPlainWord(words.get(j-i).toString()) + "@" + i, 1);
         }
-        
-        int i = 0;
-        while(j - i - 1 > 0 && i - 1 < WORD_WINDOW){
-          token.setFeatureValue(getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-1), 1);
-          i++;
+        if (nGrams > 1) {
+          int i = 0;
+          while(j - i - 1 > 0 && i - 1 < WORD_WINDOW){
+            token.setFeatureValue(getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-1), 1);
+            i++;
+          }
+          
+          i = 0;
+          while(j + i + 1 < WORD_WINDOW && j + i + 1 < words.size()){
+            token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+1), 1);
+            i++;
+          }
         }
         
-        i = 0;
-        while(j + i + 1 < WORD_WINDOW && j + i + 1 < words.size()){
-          token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+1), 1);
-          i++;
-        }
-        
-        i = 0;
-        while(j - i - 2 > 0 && i - 2 < WORD_WINDOW){
-          token.setFeatureValue(getPlainWord(words.get(j-i-2).toString()) + "_" + getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-2), 1);
-          i++;
-        }
-        
-        i = 0;
-        while(j + i + 2 < WORD_WINDOW && j + i + 2 < words.size()){
-          token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+2), 1);
-          i++;
+        if (nGrams > 2) {
+          int i = 0;
+          while(j - i - 2 > 0 && i - 2 < WORD_WINDOW){
+            token.setFeatureValue(getPlainWord(words.get(j-i-2).toString()) + "_" + getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-2), 1);
+            i++;
+          }
+          
+          i = 0;
+          while(j + i + 2 < WORD_WINDOW && j + i + 2 < words.size()){
+            token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+2), 1);
+            i++;
+          }
         }
         
 //        //bigram for each set of words around current word.
