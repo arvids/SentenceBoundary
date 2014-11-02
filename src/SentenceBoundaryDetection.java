@@ -227,12 +227,13 @@ public class SentenceBoundaryDetection {
         } else if (line.equals("<s>")) {
           continue;
         } else if (line.equals("</s>")) {
+          sb.append(" EOS");
           j++;
           if (j == 3) {
           if (random.nextInt(10) == 9) {
             testData.add(sb.toString());
           } else {
-            trainData.add(sb.toString() + " EOS");
+            trainData.add(sb.toString());
             i += j;
           }
           sb.setLength(0);

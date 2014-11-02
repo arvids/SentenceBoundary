@@ -55,6 +55,8 @@ class Sentence2Pipe extends Pipe {
           if (words.get(j + 1).equals("EOS")) {
             label = SentenceBoundary.EOS;
           }
+        } else if (words.get(j).equals("EOS)")) {
+          continue;
         }
 
         final String currentWord = words.get(j).toString();
