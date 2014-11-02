@@ -97,7 +97,7 @@ class Sentence2Pipe extends Pipe {
         }
         
         i = 0;
-        while(j + i + 1 < WORD_WINDOW){
+        while(j + i + 1 < WORD_WINDOW && j + i + 1 < words.size()){
           token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+1), 1);
           i++;
         }
