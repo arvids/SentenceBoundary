@@ -184,6 +184,9 @@ public class SentenceBoundaryDetection {
           if (sentenceLength < minSentenceLength || sentenceLength > maxSentenceLength){
             sb.setLength(0);
             sentenceLength = 0;
+            if (currentNumberOfSentencesPerLine > 0){
+              currentNumberOfSentencesPerLine--;
+            }
             continue;
           }
           sb.append("EOS");
