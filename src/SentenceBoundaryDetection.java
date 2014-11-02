@@ -227,6 +227,7 @@ public class SentenceBoundaryDetection {
         } else if (line.equals("<s>")) {
           continue;
         } else if (line.equals("</s>")) {
+          j++;
           if (j == 3) {
           if (random.nextInt(10) == 9) {
             testData.add(sb.toString());
@@ -241,7 +242,7 @@ public class SentenceBoundaryDetection {
         } else {
           final String s = line.split("\\s")[0];
           numberOfWords++;
-          if (symbols.isEosSymbol(s)) {
+          if (symbols.isSymbol(s)) {
             sb.append(s);
           } else {
             sb.append(" " + s);
