@@ -227,7 +227,7 @@ public class SentenceBoundaryDetection {
         } else if (line.equals("<s>")) {
           continue;
         } else if (line.equals("</s>")) {
-          sb.append(" EOS");
+          sb.append("EOS");
           j++;
           if (j == 3) {
           if (random.nextInt(10) == 9) {

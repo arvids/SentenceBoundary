@@ -50,6 +50,16 @@ class Symbols implements Serializable {
     }
     return false;
   }
+  
+  public boolean wordEndsWithEOS(String word) {
+    if (word.length() > 0 && word.length() > 3) {
+      final String subString = word.substring(word.length() - 3, word.length());
+      if (subString.equals("EOS")) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public boolean wordEndsWithEOSSymbol(String word) {
     if (word.length() > 0) {

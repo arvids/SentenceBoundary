@@ -51,15 +51,19 @@ class Sentence2Pipe extends Pipe {
 
       for (int j = 0; j < words.size(); j++) {
         String label = SentenceBoundary.IS;
-        if (j + 1 < words.size()) {
-          if (words.get(j + 1).equals("EOS")) {
-            label = SentenceBoundary.EOS;
-          }
-        } else if (words.get(j).equals("EOS)")) {
-          continue;
-        }
+//        if (j + 1 < words.size()) {
+//          if (words.get(j + 1).equals("EOS")) {
+//            label = SentenceBoundary.EOS;
+//          }
+//        } else if (words.get(j).equals("EOS)")) {
+//          continue;
+//        }
 
-        final String currentWord = words.get(j).toString();
+        String currentWord = words.get(j).toString();
+        if (symbols.wordEndsWithEOS(currentWord)) {
+          label = SentenceBoundary.EOS;
+          currentWord = currentWord.substring(0, currentWord.length() -3);
+        }
         final String plainCurrentWord = getPlainWord(currentWord);
         final Token token = new Token(plainCurrentWord);
         
