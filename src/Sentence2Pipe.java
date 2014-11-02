@@ -26,9 +26,7 @@ class Sentence2Pipe extends Pipe {
     symbols = new Symbols();
   }
 
-  /* (non-Javadoc)
-   * @see cc.mallet.pipe.Pipe#pipe(cc.mallet.types.Instance)
-   */
+
   @Override
   public Instance pipe(Instance instance) {
     
@@ -50,39 +48,26 @@ class Sentence2Pipe extends Pipe {
       }
 
       for (int j = 0; j < words.size(); j++) {
+        
+        /*
+         * Add correct label
+         * 
+         */
         String label = SentenceBoundary.IS;
-//        if (j + 1 < words.size()) {
-//          if (words.get(j + 1).equals("EOS")) {
-//            label = SentenceBoundary.EOS;
-//          }
-//        } else if (words.get(j).equals("EOS)")) {
-//          continue;
-//        }
-
         String currentWord = words.get(j).toString();
         if (symbols.wordEndsWithEOS(currentWord)) {
           label = SentenceBoundary.EOS;
           currentWord = currentWord.substring(0, currentWord.length() -3);
         }
+        
         final String plainCurrentWord = getPlainWord(currentWord);
         final Token token = new Token(plainCurrentWord);
         
-//        if (symbols.wordEndsWithEOSSymbol(currentWord)) {
-//          //token.setFeatureValue(getSymbol(currentWord), 1);
-//          label = SentenceBoundary.EOS;
-//        }
         
+        /*
+         * Add unigram features, word window is set to 5.
+         */
         token.setFeatureValue(plainCurrentWord + "@0", 1);
-        
-        //current word as feature
-        
-        
-        //unigram for each word before current word.
-        for (int i = 1; j - i > 0 & i < WORD_WINDOW; i++) {
-          token.setFeatureValue(getPlainWord(words.get(j-i).toString()) + "@" + i, 1);
-        }
-        
-        //unigram of each word around current word.
         for (int i = 1; j + i < words.size() & i < WORD_WINDOW; i++) {
           token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "@" + i, 1);
         }
@@ -102,6 +87,18 @@ class Sentence2Pipe extends Pipe {
           i++;
         }
         
+        i = 0;
+        while(j - i - 2 > 0 && i - 2 < WORD_WINDOW){
+          token.setFeatureValue(getPlainWord(words.get(j-i-2).toString()) + "_" + getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-2), 1);
+          i++;
+        }
+        
+        i = 0;
+        while(j + i + 2 < WORD_WINDOW && j + i + 2 < words.size()){
+          token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+2), 1);
+          i++;
+        }
+        
 //        //bigram for each set of words around current word.
 //        if (j-2 > 0) {
 //          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "@" + (j-1) + "_" + (j-2), 1);
@@ -110,13 +107,13 @@ class Sentence2Pipe extends Pipe {
 //          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "@" + (j+1) + "_" + (j+2), 1);
 //        }
         
-        //trigram around word
-        if (j-3 > 0) {
-          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "_" + getPlainWord(words.get(j-3).toString()) + "@" + (j-1) + "_" + (j-3), 1);
-        }
-        if (j+3 < words.size()) {
-          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "_" + getPlainWord(words.get(j+3).toString()) + "@" + (j+1) + "_" + (j+3), 1);
-        }
+//        //trigram around word
+//        if (j-3 > 0) {
+//          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "_" + getPlainWord(words.get(j-3).toString()) + "@" + (j-1) + "_" + (j-3), 1);
+//        }
+//        if (j+3 < words.size()) {
+//          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "_" + getPlainWord(words.get(j+3).toString()) + "@" + (j+1) + "_" + (j+3), 1);
+//        }
         
 //        //position 
 //        if (j<3) {
