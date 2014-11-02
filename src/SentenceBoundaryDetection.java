@@ -25,6 +25,10 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.Sequence;
 
+/**
+ * @author Arvid
+ *
+ */
 public class SentenceBoundaryDetection {
 
   private int                      numberOfSentences;
@@ -39,14 +43,29 @@ public class SentenceBoundaryDetection {
   private static ArrayList<String> trainTexts;
   private static ArrayList<String> testTexts;
 
+  /**
+   * @param file
+   */
   public SentenceBoundaryDetection(File file) {
     this(file, Integer.MAX_VALUE);
   }
 
+  /**
+   * @param file
+   * @param numberOfSentences
+   */
   public SentenceBoundaryDetection(File file, int numberOfSentences) {
     this(file, numberOfSentences, 3, 3, 5, 0.1);
   }
 
+  /**
+   * @param file
+   * @param numberOfSentences
+   * @param numberOfSentencesPerLine
+   * @param nGrams
+   * @param wordWindow
+   * @param testTrainRatio
+   */
   public SentenceBoundaryDetection(File file, int numberOfSentences, int numberOfSentencesPerLine,
       int nGrams, int wordWindow, double testTrainRatio) {
     this.numberOfSentences = numberOfSentences;
@@ -59,12 +78,17 @@ public class SentenceBoundaryDetection {
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
     chunkSize = this.numberOfSentences / numberOfChunks;
     System.out.println("ChunkSize: " + chunkSize);
+    InstanceList instanceList;
+    if (chunkSize == 0) {
+      instanceList = createTrainingDataFromSentences(trainTexts, nGrams, wordWindow);
+    } else {
     start = System.currentTimeMillis();
     final ArrayList<ArrayList<String>> trainDataChunks = chunks(trainTexts, chunkSize);
     System.out.println("Split " + this.numberOfSentences + " in to " + trainDataChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
-    final InstanceList instanceList =
+    instanceList =
         createTrainningDataFromSentences(trainDataChunks, nGrams, wordWindow);
+    }
     train(instanceList);
     outputFilename = "FILE=" + file.getName() + "_SENTENCES=" + numberOfSentences
         + "_SENTENCES_PER_LINE=" + numberOfSentencesPerLine + "_N-GRAM_SIZE=" + nGrams
@@ -75,6 +99,12 @@ public class SentenceBoundaryDetection {
     }
   }
 
+  /**
+   * @param sentences
+   * @param nGrams
+   * @param wordWindow
+   * @return
+   */
   public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences, int nGrams,
       int wordWindow) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
