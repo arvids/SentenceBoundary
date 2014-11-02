@@ -78,25 +78,37 @@ class Sentence2Pipe extends Pipe {
         
         
         //unigram for each word before current word.
-        for (int k = 1; j - k > 0 & k < 5; k++) {
-          token.setFeatureValue(getPlainWord(words.get(j-k).toString()) + "@" + k, 1);
+        for (int i = 1; j - i > 0 & i < WORD_WINDOW; i++) {
+          token.setFeatureValue(getPlainWord(words.get(j-i).toString()) + "@" + i, 1);
         }
         
         //unigram of each word around current word.
-        for (int l = 1; j + l < words.size() & l < WORD_WINDOW; l++) {
-          token.setFeatureValue(getPlainWord(words.get(j+l).toString()) + "@" + l, 1);
+        for (int i = 1; j + i < words.size() & i < WORD_WINDOW; i++) {
+          token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "@" + i, 1);
         }
-        for (int k = 1; j - k > 0 & k < 5; k++) {
-          token.setFeatureValue(getPlainWord(words.get(j-k).toString()) + "@" + k, 1);
+        for (int i = 1; j - i > 0 & i < 5; i++) {
+          token.setFeatureValue(getPlainWord(words.get(j-i).toString()) + "@" + i, 1);
         }
         
-        //bigram for each set of words around current word.
-        if (j-2 > 0) {
-          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "@" + (j-1) + "_" + (j-2), 1);
+        int i = 0;
+        while(j - i - 1 > 0 && i - 1 < WORD_WINDOW){
+          token.setFeatureValue(getPlainWord(words.get(j-i-1).toString()) + "_" + getPlainWord(words.get(j-i).toString()) + "@" + (j-i) + "_" + (j-i-1), 1);
+          i++;
         }
-        if (j+2 < words.size()) {
-          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "@" + (j+1) + "_" + (j+2), 1);
+        
+        i = 0;
+        while(j + i + 1 < WORD_WINDOW){
+          token.setFeatureValue(getPlainWord(words.get(j+i).toString()) + "_" + getPlainWord(words.get(j+i+1).toString()) + "@" + (j+i) + "_" + (j+i+1), 1);
+          i++;
         }
+        
+//        //bigram for each set of words around current word.
+//        if (j-2 > 0) {
+//          token.setFeatureValue(getPlainWord(words.get(j-1).toString()) + "_" + getPlainWord(words.get(j-2).toString()) + "@" + (j-1) + "_" + (j-2), 1);
+//        }
+//        if (j+2 < words.size()) {
+//          token.setFeatureValue(getPlainWord(words.get(j+1).toString()) + "_" + getPlainWord(words.get(j+2).toString()) + "@" + (j+1) + "_" + (j+2), 1);
+//        }
         
         //trigram around word
         if (j-3 > 0) {
