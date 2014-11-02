@@ -72,7 +72,7 @@ public class SentenceBoundaryDetection {
     this.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
-    setData(file, numberOfSentences, numberOfSentencesPerLine, testTrainRatio);
+    setData(file, numberOfSentences, numberOfSentencesPerLine, testTrainRatio, 3, 10);
     this.numberOfSentences = trainTexts.size();
     System.out.println("Converted " + numberOfWords + " words to " + this.numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
@@ -158,7 +158,7 @@ public class SentenceBoundaryDetection {
   }
 
   private void setData(File file, int numberOfSentences, int numberOfSentencesPerLine,
-      double testTrainRatio) {
+      double testTrainRatio, int minSentenceLength, int maxSentenceLength) {
     trainTexts = new ArrayList<String>();
     testTexts = new ArrayList<String>();
     final Random random = new Random();
@@ -166,6 +166,7 @@ public class SentenceBoundaryDetection {
     final StringBuilder sb = new StringBuilder();;
     int currentNumberOfSentences = 0;
     int currentNumberOfSentencesPerLine = 0;
+    int sentenceLength = 0;
     try {
       final BufferedReader br = new BufferedReader(new FileReader(file));
       for (String line; (line = br.readLine()) != null;) {
@@ -180,6 +181,11 @@ public class SentenceBoundaryDetection {
         } else if (line.equals("<s>")) {
           continue;
         } else if (line.equals("</s>")) {
+          if (sentenceLength < minSentenceLength || sentenceLength > maxSentenceLength){
+            sb.setLength(0);
+            sentenceLength = 0;
+            continue;
+          }
           sb.append("EOS");
           currentNumberOfSentencesPerLine++;
           if (currentNumberOfSentencesPerLine == numberOfSentencesPerLine) {
@@ -196,6 +202,7 @@ public class SentenceBoundaryDetection {
         } else {
           final String s = line.split("\\s")[0];
           numberOfWords++;
+          sentenceLength++;
           if (symbols.isSymbol(s)) {
             sb.append(s);
           } else {
