@@ -28,15 +28,16 @@ import cc.mallet.types.Sequence;
 public class SentenceBoundaryDetection {
 
   private int                      numberOfSentences;
-  private static int               numberOfWords;
+  private  int               numberOfWords;
   private static final int         numberOfChunks = 20;
-  private static int               chunkSize;
-  private static File              file;
+  private  int               chunkSize;
+  private  File              file;
+  private final String outputFilename;
   public static final String       EOS            = "EOS";
   public static final String       IS             = "IS";
   private CRF                      crf;
-  private static ArrayList<String> trainData;
-  private static ArrayList<String> testData;
+  private static ArrayList<String> trainTexts;
+  private static ArrayList<String> testTexts;
 
   public SentenceBoundaryDetection(File file) {
     this(file, Integer.MAX_VALUE);
@@ -49,25 +50,26 @@ public class SentenceBoundaryDetection {
   public SentenceBoundaryDetection(File file, int numberOfSentences, int numberOfSentencesPerLine,
       int nGrams, int wordWindow, double testTrainRatio) {
     this.numberOfSentences = numberOfSentences;
-    SentenceBoundaryDetection.file = file;
+    this.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
     setData(file, numberOfSentences, numberOfSentencesPerLine, testTrainRatio);
-    this.numberOfSentences = trainData.size();
+    this.numberOfSentences = trainTexts.size();
     System.out.println("Converted " + numberOfWords + " words to " + this.numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
     chunkSize = this.numberOfSentences / numberOfChunks;
     System.out.println("ChunkSize: " + chunkSize);
     start = System.currentTimeMillis();
-    final ArrayList<ArrayList<String>> trainDataChunks = chunks(trainData, chunkSize);
+    final ArrayList<ArrayList<String>> trainDataChunks = chunks(trainTexts, chunkSize);
     System.out.println("Split " + this.numberOfSentences + " in to " + trainDataChunks.size()
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
     final InstanceList instanceList =
         createTrainningDataFromSentences(trainDataChunks, nGrams, wordWindow);
     train(instanceList);
-    writeCRF("CRF_FILE=" + file.getName() + "_SENTENCES=" + numberOfSentences
+    outputFilename = "FILE=" + file.getName() + "_SENTENCES=" + numberOfSentences
         + "_SENTENCES_PER_LINE=" + numberOfSentencesPerLine + "_N-GRAM_SIZE=" + nGrams
-        + "_WORD_WINDOW=" + wordWindow);
+        + "_WORD_WINDOW=" + wordWindow;
+    writeCRF("CRF_" + outputFilename);
     if (testTrainRatio > 0) {
       evaluate();
     }
@@ -127,8 +129,8 @@ public class SentenceBoundaryDetection {
 
   private void setData(File file, int numberOfSentences, int numberOfSentencesPerLine,
       double testTrainRatio) {
-    trainData = new ArrayList<String>();
-    testData = new ArrayList<String>();
+    trainTexts = new ArrayList<String>();
+    testTexts = new ArrayList<String>();
     final Random random = new Random();
     final Symbols symbols = new Symbols();
     final StringBuilder sb = new StringBuilder();;
@@ -152,9 +154,9 @@ public class SentenceBoundaryDetection {
           currentNumberOfSentencesPerLine++;
           if (currentNumberOfSentencesPerLine == numberOfSentencesPerLine) {
             if (random.nextDouble() < testTrainRatio) {
-              testData.add(sb.toString());
+              testTexts.add(sb.toString());
             } else {
-              trainData.add(sb.toString());
+              trainTexts.add(sb.toString());
               currentNumberOfSentences += currentNumberOfSentencesPerLine;
             }
             sb.setLength(0);
@@ -177,8 +179,8 @@ public class SentenceBoundaryDetection {
     } catch (final IOException e) {
       e.printStackTrace();
     }
-    System.out.println("Train: " + trainData.size());
-    System.out.println("Test: " + testData.size());
+    System.out.println("Train: " + trainTexts.size());
+    System.out.println("Test: " + testTexts.size());
   }
 
   public String predict(ArrayList<String> sentences) {
@@ -221,7 +223,7 @@ public class SentenceBoundaryDetection {
     int trueNegative = 0;
     int falsePositive = 0;
     int falseNegative = 0;
-    final InstanceList instanceList = createTestDataFromSentences(testData);
+    final InstanceList instanceList = createTestDataFromSentences(testTexts);
     for (int i = 0; i < instanceList.size(); i++) {
       final Instance instance = instanceList.get(i);
       final String abStractName = (String) instance.getSource();
@@ -263,16 +265,16 @@ public class SentenceBoundaryDetection {
         (truePositive + trueNegative)
             / (double) (truePositive + trueNegative + falsePositive + falseNegative);
     final double f1 = (2 * precision * recall) / (precision + recall);
-    System.out.println("Total tests: "
-        + (truePositive + trueNegative + falsePositive + falseNegative));
-    System.out.println("True positive: " + truePositive);
-    System.out.println("True negative: " + trueNegative);
-    System.out.println("False positive: " + falsePositive);
-    System.out.println("False negative: " + falseNegative);
-    System.out.println("Recall: " + recall);
-    System.out.println("Precision: " + precision);
-    System.out.println("F1: " + f1);
-    System.out.println("Accuracy: " + accuracy);
+    String results = "Total tests: " + (truePositive + trueNegative + falsePositive + falseNegative) + "\n" + "True positive: " + truePositive + "\n" + "True negative: " + trueNegative + "\n" + "False positive: " + falsePositive + "\n" + "False negative: " + falseNegative + "\n" + "Recall: " + recall + "\n" + "Precision: " + precision + "\n" + "F1: " + f1 + "\n" + "Accuracy: " + accuracy;    
+    try {
+      final FileWriter writer = new FileWriter("EVAL_" + outputFilename);
+      writer.write(results);
+      writer.flush();
+      writer.close();
+    } catch (final IOException e) {
+      e.printStackTrace();
+      System.exit(0);
+    }
   }
 
   public static ArrayList<ArrayList<String>> chunks(ArrayList<String> sentences, int size) {
