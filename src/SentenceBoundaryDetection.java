@@ -174,52 +174,6 @@ public class SentenceBoundaryDetection {
     System.out.println("Train: " + trainData.size());
     System.out.println("Test: " + testData.size());
   }
-  
-  private void setData9010(File file, int numberOfSentences) {
-    trainData = new ArrayList<String>();
-    testData = new ArrayList<String>();
-    Random random = new Random();
-    final Symbols symbols = new Symbols();
-    final StringBuilder sb = new StringBuilder();;
-    int i = 0;
-    try {
-      final BufferedReader br = new BufferedReader(new FileReader(file));
-      for (String line; (line = br.readLine()) != null;) {
-        if (i == numberOfSentences) {
-          break;
-        }
-        if (line.startsWith("<text")) {
-          continue;
-        } else if (line.equals("<s>")) {
-          sb.setLength(0);
-          continue;
-        } else if (line.equals("</s>")) {
-          if (random.nextInt(10) == 9) {
-            testData.add(sb.toString());
-          } else {
-            trainData.add(sb.toString());
-            i++;
-          }
-          continue;
-        } else {
-          final String s = line.split("\\s")[0];
-          numberOfWords++;
-          if (symbols.isEosSymbol(s)) {
-            sb.append(s);
-          } else {
-            sb.append(" " + s);
-          }
-        }
-      }
-      br.close();
-    } catch (final FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (final IOException e) {
-      e.printStackTrace();
-    }
-    System.out.println("Train: " + trainData.size());
-    System.out.println("Test: " + testData.size());
-  }
 
   public String predict(ArrayList<String> sentences) {
     final long start = System.currentTimeMillis();
@@ -323,8 +277,6 @@ public class SentenceBoundaryDetection {
     System.out.println("Precision: " + precision);
     System.out.println("F1: " + f1);
     System.out.println("Accuracy: " + accuracy);
-    
-    
   }
   
   public static ArrayList<ArrayList<String>> chunks(ArrayList<String> sentences, int size) {
