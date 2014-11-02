@@ -50,7 +50,7 @@ class Sentence2Pipe extends Pipe {
       for (int j = 0; j < words.size(); j++) {
         
         /*
-         * Add correct label
+         * Add correct label, it is presumed that the word that is EOS has the string "EOS" attached to it.
          * 
          */
         String label = SentenceBoundary.IS;

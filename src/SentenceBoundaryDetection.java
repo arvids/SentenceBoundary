@@ -37,23 +37,21 @@ public class SentenceBoundaryDetection {
   private CRF                 crf;
   private static ArrayList<String> trainData;
   private static ArrayList<String> testData;
-  
-
-  public SentenceBoundaryDetection() {
-    file = new File("FAKE");
-  }
 
   public SentenceBoundaryDetection(File file) {
     this(file, Integer.MAX_VALUE);
   }
 
   public SentenceBoundaryDetection(File file, int numberOfSentences) {
+    this(file, numberOfSentences, 3, 0.1);
+  }
+  
+  public SentenceBoundaryDetection(File file, int numberOfSentences, int numberOfSentencesPerLine, double testTrainRatio) {
     this.numberOfSentences = numberOfSentences;
     SentenceBoundaryDetection.file = file;
     numberOfWords = 0;
     long start = System.currentTimeMillis();
-    //setData9010(file, numberOfSentences);
-    setData3SentencesAtATime9010(file, numberOfSentences);
+    setData(file, numberOfSentences, numberOfSentencesPerLine, testTrainRatio);
     this.numberOfSentences = trainData.size();
     System.out.println("Converted " + numberOfWords + " words to " + this.numberOfSentences
         + " sentences in " + ((System.currentTimeMillis() - start) / 1000) + " s");
@@ -65,18 +63,12 @@ public class SentenceBoundaryDetection {
         + " chunks in " + (System.currentTimeMillis() - start) + " ms");
     final InstanceList instanceList = createTrainningDataFromSentences(trainDataChunks);
     train(instanceList);
-    writeCRF("crftest");
-    evaluate();
-    
+    writeCRF("CRF_" + file.getName() + "_" + numberOfSentences + "_" + numberOfSentencesPerLine);
+    if (testTrainRatio > 0) {
+      evaluate();
+    }
   }
 
-  public CRF getCRF() {
-    return crf;
-  }
-
-  public void setCRF(CRF crf) {
-    this.crf = crf;
-  }
 
   public InstanceList createTrainingDataFromSentences(ArrayList<String> sentences) {
     final LabelAlphabet labelAlphabet = new LabelAlphabet();
@@ -128,96 +120,19 @@ public class SentenceBoundaryDetection {
     return testData;
     
   }
-
-  public static ArrayList<String> readUkWac(File file) {
-    final ArrayList<String> sentences = new ArrayList<String>();
-    final Symbols symbols = new Symbols();
-    final StringBuilder sb = new StringBuilder();;
-    try {
-      final BufferedReader br = new BufferedReader(new FileReader(file));
-      for (String line; (line = br.readLine()) != null;) {
-        if (line.startsWith("<text")) {
-          continue;
-        } else if (line.startsWith("</text")) {
-          continue;
-        } else if (line.equals("<s>")) {
-          sb.setLength(0);
-          continue;
-        } else if (line.equals("</s>")) {
-          sentences.add(sb.toString().toLowerCase());
-          continue;
-        } else {
-          final String s = line.split("\\s")[0];
-          numberOfWords++;
-          if (symbols.isEosSymbol(s)) {
-            sb.append(s);
-          } else {
-            sb.append(" " + s);
-          }
-        }
-      }
-      br.close();
-    } catch (final FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (final IOException e) {
-      e.printStackTrace();
-    }
-    return sentences;
-  }
-
-  public static ArrayList<String> readUkWac(File file, int numberOfSentences) {
-    final ArrayList<String> sentences = new ArrayList<String>();
-    final Symbols symbols = new Symbols();
-    final StringBuilder sb = new StringBuilder();;
-    int i = 0;
-    try {
-      final BufferedReader br = new BufferedReader(new FileReader(file));
-      for (String line; (line = br.readLine()) != null;) {
-        if (i == numberOfSentences) {
-          break;
-        }
-        if (line.startsWith("<text")) {
-          continue;
-        } else if (line.startsWith("</text")) {
-          continue;
-        } else if (line.equals("<s>")) {
-          sb.setLength(0);
-          continue;
-        } else if (line.equals("</s>")) {
-          sentences.add(sb.toString());
-          i++;
-          continue;
-        } else {
-          final String s = line.split("\\s")[0];
-          numberOfWords++;
-          if (symbols.isEosSymbol(s)) {
-            sb.append(s);
-          } else {
-            sb.append(" " + s);
-          }
-        }
-      }
-      br.close();
-    } catch (final FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (final IOException e) {
-      e.printStackTrace();
-    }
-    return sentences;
-  }
   
-  private void setData3SentencesAtATime9010(File file, int numberOfSentences) {
+  private void setData(File file, int numberOfSentences, int numberOfSentencesPerLine, double testTrainRatio) {
     trainData = new ArrayList<String>();
     testData = new ArrayList<String>();
     Random random = new Random();
     final Symbols symbols = new Symbols();
     final StringBuilder sb = new StringBuilder();;
-    int i = 0;
-    int j = 0;
+    int currentNumberOfSentences = 0;
+    int currentNumberOfSentencesPerLine = 0;
     try {
       final BufferedReader br = new BufferedReader(new FileReader(file));
       for (String line; (line = br.readLine()) != null;) {
-        if (i >= numberOfSentences && j == 0) {
+        if (currentNumberOfSentences >= numberOfSentences && currentNumberOfSentencesPerLine == 0) {
           break;
         }
         if (line.startsWith("<text")) {
@@ -228,16 +143,16 @@ public class SentenceBoundaryDetection {
           continue;
         } else if (line.equals("</s>")) {
           sb.append("EOS");
-          j++;
-          if (j == 3) {
-          if (random.nextInt(10) == 9) {
+          currentNumberOfSentencesPerLine++;
+          if (currentNumberOfSentencesPerLine == numberOfSentencesPerLine) {
+          if (random.nextDouble() < testTrainRatio) {
             testData.add(sb.toString());
           } else {
             trainData.add(sb.toString());
-            i += j;
+            currentNumberOfSentences += currentNumberOfSentencesPerLine;
           }
           sb.setLength(0);
-          j = 0;
+          currentNumberOfSentencesPerLine = 0;
           }
           continue;
         } else {
@@ -426,6 +341,15 @@ public class SentenceBoundaryDetection {
     for (int j = 0; j < ls.size(); j++)
       labels.add((String) ls.get(j));
     return labels;
+  }
+  
+
+  public CRF getCRF() {
+    return crf;
+  }
+
+  public void setCRF(CRF crf) {
+    this.crf = crf;
   }
 
   public void writeCRF(String filename) {
