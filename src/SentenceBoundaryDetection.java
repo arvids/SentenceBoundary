@@ -232,7 +232,7 @@ public class SentenceBoundaryDetection {
           if (random.nextInt(10) == 9) {
             testData.add(sb.toString());
           } else {
-            trainData.add(sb.toString());
+            trainData.add(sb.toString() + " EOS");
             i += j;
           }
           sb.setLength(0);
